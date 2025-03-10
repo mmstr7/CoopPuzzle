@@ -59,5 +59,8 @@
     <ClCompile Include="..\..\Source\CoopPuzzle\CoopPuzzlePlayerController.h">
       <Filter>Source\CoopPuzzle</Filter>
     </ClCompile>
+    <None Include="..\..\Source\CoopPuzzleServer.Target.cs">
+      <Filter>Source</Filter>
+    </None>
   </ItemGroup>
 </Project>

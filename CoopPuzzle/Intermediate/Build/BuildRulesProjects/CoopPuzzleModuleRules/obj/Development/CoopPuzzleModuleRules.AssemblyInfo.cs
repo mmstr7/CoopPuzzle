@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CoopPuzzleModuleRules")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Development")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ae4875c6a3b70a6185cfb50a9dd788f07ae2f6f4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8fd1373d4f82dbd9bbf9046b075f20f87c49da3f")]
 [assembly: System.Reflection.AssemblyProductAttribute("CoopPuzzleModuleRules")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CoopPuzzleModuleRules")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

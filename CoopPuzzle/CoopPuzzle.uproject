@@ -1,0 +1,22 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{601D5ABC-421D-DA68-4402-D194BC89A527}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "CoopPuzzle",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "ModelingToolsEditorMode",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		}
+	]
+}

@@ -1,0 +1,32 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "c:\\ue5project\\cooppuzzle\\cooppuzzle\\source\\cooppuzzle\\cooppuzzlegamemode.cpp",
+        "ProvidedModule": "",
+        "PCH": "c:\\program files\\epic games\\unrealengine-release\\engine\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.cpp20.h.pch",
+        "Includes": [
+            "c:\\ue5project\\cooppuzzle\\cooppuzzle\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\cooppuzzle\\definitions.cooppuzzle.h",
+            "c:\\ue5project\\cooppuzzle\\cooppuzzle\\source\\cooppuzzle\\cooppuzzlegamemode.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\source\\runtime\\engine\\classes\\gameframework\\gamemodebase.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\source\\runtime\\engine\\classes\\engine\\serverstatreplicator.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\serverstatreplicator.generated.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\gamemodebase.generated.h",
+            "c:\\ue5project\\cooppuzzle\\cooppuzzle\\intermediate\\build\\win64\\unrealeditor\\inc\\cooppuzzle\\uht\\cooppuzzlegamemode.generated.h",
+            "c:\\ue5project\\cooppuzzle\\cooppuzzle\\source\\cooppuzzle\\cooppuzzleplayercontroller.h",
+            "c:\\ue5project\\cooppuzzle\\cooppuzzle\\intermediate\\build\\win64\\unrealeditor\\inc\\cooppuzzle\\uht\\cooppuzzleplayercontroller.generated.h",
+            "c:\\ue5project\\cooppuzzle\\cooppuzzle\\source\\cooppuzzle\\cooppuzzlecharacter.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\source\\runtime\\engine\\classes\\gameframework\\character.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\source\\runtime\\engine\\classes\\gameframework\\charactermovementreplication.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\source\\runtime\\net\\core\\public\\net\\core\\nettoken\\nettokenexportcontext.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\source\\runtime\\experimental\\iris\\core\\public\\iris\\serialization\\irisobjectreferencepackagemap.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\iriscore\\uht\\irisobjectreferencepackagemap.generated.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\charactermovementreplication.generated.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\source\\runtime\\engine\\classes\\gameframework\\rootmotionsource.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\rootmotionsource.generated.h",
+            "c:\\program files\\epic games\\unrealengine-release\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\character.generated.h",
+            "c:\\ue5project\\cooppuzzle\\cooppuzzle\\intermediate\\build\\win64\\unrealeditor\\inc\\cooppuzzle\\uht\\cooppuzzlecharacter.generated.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

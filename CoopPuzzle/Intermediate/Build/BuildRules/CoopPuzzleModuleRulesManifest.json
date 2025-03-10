@@ -1,0 +1,8 @@
+{
+	"SourceFiles": [
+		"C:\\UE5Project\\CoopPuzzle\\CoopPuzzle\\Source\\CoopPuzzle\\CoopPuzzle.Build.cs",
+		"C:\\UE5Project\\CoopPuzzle\\CoopPuzzle\\Source\\CoopPuzzle.Target.cs",
+		"C:\\UE5Project\\CoopPuzzle\\CoopPuzzle\\Source\\CoopPuzzleEditor.Target.cs"
+	],
+	"EngineVersion": "5.5.3"
+}

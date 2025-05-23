@@ -72,3 +72,10 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# UE 기본 제외 폴더
+Saved/
+Binaries/
+Intermediate/
+DerivedDataCache/
+.vscode/

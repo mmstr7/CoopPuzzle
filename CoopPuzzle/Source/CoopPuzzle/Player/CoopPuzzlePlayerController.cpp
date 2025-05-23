@@ -1,19 +1,11 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "CoopPuzzlePlayerController.h"
-#include "GameFramework/Pawn.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
-#include "NiagaraSystem.h"
-#include "NiagaraFunctionLibrary.h"
-#include "CoopPuzzleCharacter.h"
-#include "Engine/World.h"
 #include "EnhancedInputComponent.h"
-#include "InputActionValue.h"
 #include "EnhancedInputSubsystems.h"
-#include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
 
-DEFINE_LOG_CATEGORY(LogTemplateCharacter);
+DEFINE_LOG_CATEGORY( LogCoopPuzzleController );
 
 ACoopPuzzlePlayerController::ACoopPuzzlePlayerController()
 {
@@ -51,7 +43,7 @@ void ACoopPuzzlePlayerController::OnMove( const FInputActionInstance& Instance )
 	APawn* pLocalPlayer = GetPawn();
 	if( IsValid( pLocalPlayer ) == false )
 	{
-		UE_LOG( LogTemplateCharacter, Error, TEXT( "ACoopPuzzlePlayerController::OnMove() : LocalPlayer is not valid." ) );
+		UE_LOG( LogCoopPuzzleController, Error, TEXT( "ACoopPuzzlePlayerController::OnMove() : LocalPlayer is not valid." ) );
 		return;
 	}
 

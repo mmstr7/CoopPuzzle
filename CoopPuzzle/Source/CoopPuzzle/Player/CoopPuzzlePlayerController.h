@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Templates/SubclassOf.h"
 #include "GameFramework/PlayerController.h"
 #include "CoopPuzzlePlayerController.generated.h"
 
@@ -13,7 +12,7 @@ class UInputMappingContext;
 class UInputAction;
 struct FInputActionInstance;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN( LogCoopPuzzleController, Log, All );
 
 UCLASS()
 class ACoopPuzzlePlayerController : public APlayerController

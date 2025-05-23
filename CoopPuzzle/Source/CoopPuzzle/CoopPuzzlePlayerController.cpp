@@ -11,6 +11,7 @@
 #include "InputActionValue.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
+#include "InputMappingContext.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -18,108 +19,47 @@ ACoopPuzzlePlayerController::ACoopPuzzlePlayerController()
 {
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
-	CachedDestination = FVector::ZeroVector;
-	FollowTime = 0.f;
 }
 
 void ACoopPuzzlePlayerController::BeginPlay()
 {
-	// Call the base class  
 	Super::BeginPlay();
 }
 
 void ACoopPuzzlePlayerController::SetupInputComponent()
 {
-	// set up gameplay key bindings
 	Super::SetupInputComponent();
 
-	// Add Input Mapping Context
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	checkf( IsValid( DefaultMappingContext ) == true, TEXT( "DefaultMappingContext is not set. Did you forget to assign it?" ) );
+	checkf( IsValid( MoveAction ) == true, TEXT( "MoveAction is not set. Did you forget to assign it?" ) );
+
+	UEnhancedInputLocalPlayerSubsystem* pInputLocalPlayerSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>( GetLocalPlayer() );
+	if( IsValid( pInputLocalPlayerSubsystem ) == true )
 	{
-		Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		pInputLocalPlayerSubsystem->AddMappingContext( DefaultMappingContext, 0 );
 	}
 
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+	UEnhancedInputComponent* pEnhancedInputComponent = Cast<UEnhancedInputComponent>( InputComponent );
+	if( IsValid( pEnhancedInputComponent ) == true )
 	{
-		// Setup mouse input events
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Started, this, &ACoopPuzzlePlayerController::OnInputStarted);
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Triggered, this, &ACoopPuzzlePlayerController::OnSetDestinationTriggered);
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Completed, this, &ACoopPuzzlePlayerController::OnSetDestinationReleased);
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Canceled, this, &ACoopPuzzlePlayerController::OnSetDestinationReleased);
-
-		// Setup touch input events
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Started, this, &ACoopPuzzlePlayerController::OnInputStarted);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Triggered, this, &ACoopPuzzlePlayerController::OnTouchTriggered);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Completed, this, &ACoopPuzzlePlayerController::OnTouchReleased);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Canceled, this, &ACoopPuzzlePlayerController::OnTouchReleased);
-	}
-	else
-	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		pEnhancedInputComponent->BindAction( MoveAction, ETriggerEvent::Triggered, this, &ACoopPuzzlePlayerController::OnMove );
 	}
 }
 
-void ACoopPuzzlePlayerController::OnInputStarted()
+void ACoopPuzzlePlayerController::OnMove( const FInputActionInstance& Instance )
 {
-	StopMovement();
-}
-
-// Triggered every frame when the input is held down
-void ACoopPuzzlePlayerController::OnSetDestinationTriggered()
-{
-	// We flag that the input is being pressed
-	FollowTime += GetWorld()->GetDeltaSeconds();
-	
-	// We look for the location in the world where the player has pressed the input
-	FHitResult Hit;
-	bool bHitSuccessful = false;
-	if (bIsTouch)
+	APawn* pLocalPlayer = GetPawn();
+	if( IsValid( pLocalPlayer ) == false )
 	{
-		bHitSuccessful = GetHitResultUnderFinger(ETouchIndex::Touch1, ECollisionChannel::ECC_Visibility, true, Hit);
-	}
-	else
-	{
-		bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
+		UE_LOG( LogTemplateCharacter, Error, TEXT( "ACoopPuzzlePlayerController::OnMove() : LocalPlayer is not valid." ) );
+		return;
 	}
 
-	// If we hit a surface, cache the location
-	if (bHitSuccessful)
-	{
-		CachedDestination = Hit.Location;
-	}
-	
-	// Move towards mouse pointer or touch
-	APawn* ControlledPawn = GetPawn();
-	if (ControlledPawn != nullptr)
-	{
-		FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
-		ControlledPawn->AddMovementInput(WorldDirection, 1.0, false);
-	}
-}
+	const FVector2D Value = Instance.GetValue().Get<FVector2D>();
 
-void ACoopPuzzlePlayerController::OnSetDestinationReleased()
-{
-	// If it was a short press
-	if (FollowTime <= ShortPressThreshold)
-	{
-		// We move there and spawn some particles
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
-	}
+	if( FMath::IsNearlyZero( Value.X ) == false )
+		pLocalPlayer->AddMovementInput( FVector( 0, 1, 0 ), Value.X );
 
-	FollowTime = 0.f;
-}
-
-// Triggered every frame when the input is held down
-void ACoopPuzzlePlayerController::OnTouchTriggered()
-{
-	bIsTouch = true;
-	OnSetDestinationTriggered();
-}
-
-void ACoopPuzzlePlayerController::OnTouchReleased()
-{
-	bIsTouch = false;
-	OnSetDestinationReleased();
+	if( FMath::IsNearlyZero( Value.Y ) == false )
+		pLocalPlayer->AddMovementInput( FVector( 1, 0, 0 ), Value.Y );
 }

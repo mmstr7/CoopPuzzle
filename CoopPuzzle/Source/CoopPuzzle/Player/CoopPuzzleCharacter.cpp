@@ -7,7 +7,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "CoopPuzzle/Object/EventTriggerObjectBase.h"
 #include "CoopPuzzle/Player/CoopPuzzlePlayerController.h"
-#include "CoopPuzzle/Utility/CoopPuzzleEnums.h"
 #include "CoopPuzzle/Subsystem/EventTriggerManagerSubsystem.h"
 
 ACoopPuzzleCharacter::ACoopPuzzleCharacter()
@@ -61,9 +60,9 @@ void ACoopPuzzleCharacter::UnPossessed()
 	m_pPlayerController = nullptr;
 }
 
-void ACoopPuzzleCharacter::OnKeyPressed_DE( EPlayerInputType ePlayerInputType )
+void ACoopPuzzleCharacter::OnKeyPressed_DE( EPlayerInputType ePlayerInputType ) const
 {
-	ensureMsgf( ePlayerInputType != EPlayerInputType::None, TEXT( "Invalid input: EPlayerInputType::None. Check input binding or call site." ) );
+	checkf( ePlayerInputType != EPlayerInputType::None, TEXT( "Invalid input: EPlayerInputType::None. Check input binding or call site." ) );
 
 	switch( ePlayerInputType )
 	{

@@ -18,9 +18,9 @@ void ACoopPuzzlePlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	ensureMsgf( IsValid( MoveAction ) == true, TEXT( "MoveAction is not set. Did you forget to assign it?" ) );
-	ensureMsgf( IsValid( InteractAction ) == true, TEXT( "InteractAction is not set. Did you forget to assign it?" ) );
-	ensureMsgf( IsValid( DefaultMappingContext ) == true, TEXT( "DefaultMappingContext is not set. Did you forget to assign it?" ) );
+	checkf( IsValid( MoveAction ) == true, TEXT( "MoveAction is not set. Did you forget to assign it?" ) );
+	checkf( IsValid( InteractAction ) == true, TEXT( "InteractAction is not set. Did you forget to assign it?" ) );
+	checkf( IsValid( DefaultMappingContext ) == true, TEXT( "DefaultMappingContext is not set. Did you forget to assign it?" ) );
 
 	UEnhancedInputLocalPlayerSubsystem* pInputLocalPlayerSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>( GetLocalPlayer() );
 	if( IsValid( pInputLocalPlayerSubsystem ) == true )

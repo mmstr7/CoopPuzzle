@@ -19,7 +19,7 @@ class COOPPUZZLE_API UEventTriggerManagerSubsystem : public UGameInstanceSubsyst
 	GENERATED_BODY()
 	
 public:
-	void TriggerEvent( const FName& TriggerID, ACoopPuzzleCharacter* pInstigator );
+	void TriggerEvent( const FName& TriggerID, const ACoopPuzzleCharacter* pInstigator ) const;
 
 protected:
 	virtual bool ShouldCreateSubsystem( UObject* Outer ) const override;

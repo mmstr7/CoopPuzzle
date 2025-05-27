@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "CoopPuzzle/Utility/CoopPuzzleEnums.h"
+#include "CoopPuzzle/Data/CoopPuzzleEnums.h"
 #include "EventTriggerObjectBase.generated.h"
 
-UCLASS()
+struct FEventDataRow;
+
+UCLASS(BlueprintType)
 class COOPPUZZLE_API AEventTriggerObjectBase : public AActor
 {
 	GENERATED_BODY()
@@ -25,4 +27,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class UBoxComponent* TriggerVolume = nullptr;
+
+private:
+	const FEventDataRow* m_pEventData = nullptr;
 };

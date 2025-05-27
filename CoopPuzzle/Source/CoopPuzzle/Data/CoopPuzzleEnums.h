@@ -39,3 +39,11 @@ enum class EPlayerInputType : uint8
 	None				UMETA( Hidden ),
 	Interact			UMETA( DisplayName = "Interact" ),
 };
+
+UENUM(BlueprintType)
+enum class EDataTableType : uint8
+{
+	Event				UMETA( DisplayName = "EventDataTable" ),
+	Item				UMETA( DisplayName = "ItemDataTable" ),
+	MAX					UMETA( Hidden ),
+};

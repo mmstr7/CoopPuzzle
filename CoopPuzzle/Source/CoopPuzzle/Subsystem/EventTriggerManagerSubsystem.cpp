@@ -1,14 +1,24 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "CoopPuzzle/Subsystem/EventTriggerManagerSubsystem.h"
+#include "CoopPuzzle/Data/CoopPuzzleData.h"
+#include "CoopPuzzle/Subsystem/DataTableSubsystem.h"
 #include "CoopPuzzle/Player/CoopPuzzleCharacter.h"
 
 DEFINE_LOG_CATEGORY( LogEventTriggerManagerSubsystem );
 
-void UEventTriggerManagerSubsystem::TriggerEvent( const FName& TriggerID, ACoopPuzzleCharacter* pInstigator )
+void UEventTriggerManagerSubsystem::TriggerEvent( const FName& TriggerID, const ACoopPuzzleCharacter* pInstigator ) const
 {
-   ensureMsgf( IsValid( pInstigator ) == true, TEXT( "pInstigator is invalid. Please check the call site." ) );
+   checkf( IsValid( pInstigator ) == true, TEXT( "pInstigator is invalid. Please check the call site." ) );
+
+   UDataTableSubsystem* pDataTableSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UDataTableSubsystem>() : nullptr;
+   checkf( IsValid( pDataTableSubsystem ) == true, TEXT( "pDataTableSubsystem is invalid." ) );
+
+   const FEventDataRow* pEventData = pDataTableSubsystem->GetDataRowOrNull<FEventDataRow>( EDataTableType::Event, TriggerID );
+   checkf( pEventData != nullptr, TEXT( "pEventData is invalid. Please check TriggerID" ) );
+
+   // TODO: 트리거 조건 체크
 
 
 

@@ -5,17 +5,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Delegates/DelegateCombinations.h"
-#include "CoopPuzzle/Utility/CoopPuzzleEnums.h"
+#include "CoopPuzzle/Data/CoopPuzzleEnums.h"
 #include "CoopPuzzlePlayerController.generated.h"
 
-/** Forward declaration to improve compiling times */
-class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionInstance;
 
 DECLARE_MULTICAST_DELEGATE_OneParam( FOnInputAction_DE, EPlayerInputType );
-
 DECLARE_LOG_CATEGORY_EXTERN( LogCoopPuzzleController, Log, All );
 
 UCLASS()

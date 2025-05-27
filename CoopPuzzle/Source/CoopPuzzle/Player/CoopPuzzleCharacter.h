@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "CoopPuzzle/Utility/CoopPuzzleEnums.h"
+#include "CoopPuzzle/Data/CoopPuzzleEnums.h"
 #include "CoopPuzzleCharacter.generated.h"
 
 class AEventTriggerObjectBase;
@@ -24,7 +24,7 @@ protected:
 
 private:
 	UFUNCTION()
-	void OnKeyPressed_DE( EPlayerInputType ePlayerInputType );
+	void OnKeyPressed_DE( EPlayerInputType ePlayerInputType ) const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* TopDownCameraComponent;

@@ -4,7 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "CoopPuzzle/Utility/CoopPuzzleEnums.h"
 #include "CoopPuzzleCharacter.generated.h"
+
+class AEventTriggerObjectBase;
+class ACoopPuzzlePlayerController;
 
 UCLASS(Blueprintable)
 class ACoopPuzzleCharacter : public ACharacter
@@ -14,21 +18,24 @@ class ACoopPuzzleCharacter : public ACharacter
 public:
 	ACoopPuzzleCharacter();
 
-	// Called every frame.
-	virtual void Tick(float DeltaSeconds) override;
-
-	/** Returns TopDownCameraComponent subobject **/
-	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+protected:
+	virtual void PossessedBy( AController* NewController ) override;
+	virtual void UnPossessed() override;
 
 private:
-	/** Top down camera */
+	UFUNCTION()
+	void OnKeyPressed_DE( EPlayerInputType ePlayerInputType );
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* TopDownCameraComponent;
 
-	/** Camera boom positioning the camera above the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
+
+	UPROPERTY()
+	ACoopPuzzlePlayerController* m_pPlayerController = nullptr;
+
+	UPROPERTY()
+	AEventTriggerObjectBase* m_pInteractableEventTrigger = nullptr;
 };
 

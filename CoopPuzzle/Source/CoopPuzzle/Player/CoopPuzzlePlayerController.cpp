@@ -4,6 +4,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
+#include "CoopPuzzle/Player/CoopPuzzleCharacter.h"
 
 DEFINE_LOG_CATEGORY( LogCoopPuzzleController );
 
@@ -13,17 +14,13 @@ ACoopPuzzlePlayerController::ACoopPuzzlePlayerController()
 	DefaultMouseCursor = EMouseCursor::Default;
 }
 
-void ACoopPuzzlePlayerController::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
 void ACoopPuzzlePlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	checkf( IsValid( DefaultMappingContext ) == true, TEXT( "DefaultMappingContext is not set. Did you forget to assign it?" ) );
-	checkf( IsValid( MoveAction ) == true, TEXT( "MoveAction is not set. Did you forget to assign it?" ) );
+	ensureMsgf( IsValid( MoveAction ) == true, TEXT( "MoveAction is not set. Did you forget to assign it?" ) );
+	ensureMsgf( IsValid( InteractAction ) == true, TEXT( "InteractAction is not set. Did you forget to assign it?" ) );
+	ensureMsgf( IsValid( DefaultMappingContext ) == true, TEXT( "DefaultMappingContext is not set. Did you forget to assign it?" ) );
 
 	UEnhancedInputLocalPlayerSubsystem* pInputLocalPlayerSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>( GetLocalPlayer() );
 	if( IsValid( pInputLocalPlayerSubsystem ) == true )
@@ -35,6 +32,7 @@ void ACoopPuzzlePlayerController::SetupInputComponent()
 	if( IsValid( pEnhancedInputComponent ) == true )
 	{
 		pEnhancedInputComponent->BindAction( MoveAction, ETriggerEvent::Triggered, this, &ACoopPuzzlePlayerController::OnMove );
+		pEnhancedInputComponent->BindAction( InteractAction, ETriggerEvent::Started, this, &ACoopPuzzlePlayerController::SERVER_OnInteract );
 	}
 }
 

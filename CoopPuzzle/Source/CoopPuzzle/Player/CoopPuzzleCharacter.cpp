@@ -1,51 +1,85 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "CoopPuzzleCharacter.h"
-#include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
-#include "Components/DecalComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Materials/Material.h"
-#include "Engine/World.h"
+#include "CoopPuzzle/Object/EventTriggerObjectBase.h"
+#include "CoopPuzzle/Player/CoopPuzzlePlayerController.h"
+#include "CoopPuzzle/Utility/CoopPuzzleEnums.h"
+#include "CoopPuzzle/Subsystem/EventTriggerManagerSubsystem.h"
 
 ACoopPuzzleCharacter::ACoopPuzzleCharacter()
 {
-	// Set size for player capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
-	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Rotate character to moving direction
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
 
-	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
+	CameraBoom->SetUsingAbsoluteRotation(true);
 	CameraBoom->TargetArmLength = 800.f;
 	CameraBoom->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
-	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
+	CameraBoom->bDoCollisionTest = false;
 
-	// Create a camera...
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+	TopDownCameraComponent->bUsePawnControlRotation = false;
 
-	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 }
 
-void ACoopPuzzleCharacter::Tick(float DeltaSeconds)
+void ACoopPuzzleCharacter::PossessedBy( AController* NewController )
 {
-    Super::Tick(DeltaSeconds);
+	Super::PossessedBy( NewController );
+
+	m_pPlayerController = static_cast< ACoopPuzzlePlayerController* >( NewController );
+	if( IsValid( m_pPlayerController ) == false )
+		return;
+
+	if( m_pPlayerController->OnInputAction_DE.IsBound() == false )
+		m_pPlayerController->OnInputAction_DE.AddUObject( this, &ACoopPuzzleCharacter::OnKeyPressed_DE );
+}
+
+void ACoopPuzzleCharacter::UnPossessed()
+{
+	Super::UnPossessed();
+
+	if( IsValid( m_pPlayerController ) == false )
+		return;
+
+	m_pPlayerController->OnInputAction_DE.RemoveAll( this );
+	m_pPlayerController = nullptr;
+}
+
+void ACoopPuzzleCharacter::OnKeyPressed_DE( EPlayerInputType ePlayerInputType )
+{
+	ensureMsgf( ePlayerInputType != EPlayerInputType::None, TEXT( "Invalid input: EPlayerInputType::None. Check input binding or call site." ) );
+
+	switch( ePlayerInputType )
+	{
+	case EPlayerInputType::Interact:
+	{
+		if( IsValid( m_pInteractableEventTrigger ) == false || IsValid( GetGameInstance() ) == false )
+			return;
+
+		UEventTriggerManagerSubsystem* pTriggerManagerSubsystem = GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>();
+		if( IsValid( pTriggerManagerSubsystem ) == false )
+			return;
+
+		pTriggerManagerSubsystem->TriggerEvent( m_pInteractableEventTrigger->GetEventTriggerID(), this );
+
+	} break;
+	default:
+		break;
+	}
 }

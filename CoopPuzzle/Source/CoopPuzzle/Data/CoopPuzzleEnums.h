@@ -5,6 +5,15 @@
 #include "CoreMinimal.h"
 
 UENUM(BlueprintType)
+enum class EEventTriggerState : uint8
+{
+	None				UMETA( Hidden ),
+	Disabled			UMETA( DisplayName = "Disabled" ),
+	Enabled				UMETA( DisplayName = "Enabled" ),
+	Triggered			UMETA( DisplayName = "Triggered" ),
+};
+
+UENUM(BlueprintType)
 enum class EEventTriggerMode : uint8
 {
 	None				UMETA( Hidden ),
@@ -16,16 +25,24 @@ UENUM(BlueprintType)
 enum class EEventTriggerCondition : uint8
 {
 	None				UMETA( Hidden ),
+	Unconditional		UMETA( DisplayName = "Unconditional" ),
 };
 
 UENUM(BlueprintType)
-enum class EEventTriggerEffect : uint8
+enum class EEventTriggerSuccessEffect : uint8
 {
-	None				UMETA( Hidden ),
-	PickUpAttach		UMETA( DisplayName = "PickUpAttach" ),
+    None                UMETA(Hidden),
+    CallCustomEvent     UMETA(DisplayName = "CallCustomEvent"),
 };
 
 UENUM(BlueprintType)
+enum class EEventTriggerFailureEffect : uint8
+{
+    None                UMETA(Hidden),
+    CallCustomEvent     UMETA(DisplayName = "CallCustomEvent"),
+};
+
+UENUM( BlueprintType )
 enum class EEventTriggerResult : uint8
 {
 	None				UMETA( Hidden ),
@@ -43,7 +60,8 @@ enum class EPlayerInputType : uint8
 UENUM(BlueprintType)
 enum class EDataTableType : uint8
 {
-	Event				UMETA( DisplayName = "EventDataTable" ),
+	EventTrigger		UMETA( DisplayName = "EventTriggerDataTable" ),
 	Item				UMETA( DisplayName = "ItemDataTable" ),
 	MAX					UMETA( Hidden ),
 };
+

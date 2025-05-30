@@ -8,7 +8,7 @@
 #include "CoopPuzzleData.generated.h"
 
 USTRUCT(BlueprintType)
-struct FEventDataRow : public FTableRowBase
+struct FEventTriggerDataRow : public FTableRowBase
 {
     GENERATED_BODY()
 
@@ -20,13 +20,22 @@ struct FEventDataRow : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 조건" ) )
     EEventTriggerCondition EventTriggerCondition = EEventTriggerCondition::None;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 효과" ) )
-    EEventTriggerEffect EventTriggerEffect = EEventTriggerEffect::None;
 };
 
 USTRUCT(BlueprintType)
 struct FItemDataRow : public FTableRowBase
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FText ItemName = FText();
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FString Comment = "";
+};
+
+USTRUCT(BlueprintType)
+struct FLevelSequenceDataRow : public FTableRowBase
 {
     GENERATED_BODY()
 

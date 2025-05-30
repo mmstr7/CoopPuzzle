@@ -18,7 +18,10 @@ class ACoopPuzzleCharacter : public ACharacter
 public:
 	ACoopPuzzleCharacter();
 
+	const int64& GetPlayerUID() const { return m_iPlayerUID; }
+
 protected:
+	virtual void BeginPlay() override;
 	virtual void PossessedBy( AController* NewController ) override;
 	virtual void UnPossessed() override;
 
@@ -37,5 +40,7 @@ private:
 
 	UPROPERTY()
 	AEventTriggerObjectBase* m_pInteractableEventTrigger = nullptr;
+
+	int64 m_iPlayerUID = -1;
 };
 

@@ -13,6 +13,7 @@ class UInputAction;
 struct FInputActionInstance;
 
 DECLARE_MULTICAST_DELEGATE_OneParam( FOnInputAction_DE, EPlayerInputType );
+
 DECLARE_LOG_CATEGORY_EXTERN( LogCoopPuzzleController, Log, All );
 
 UCLASS()

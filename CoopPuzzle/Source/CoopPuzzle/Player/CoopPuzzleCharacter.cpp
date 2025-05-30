@@ -8,6 +8,7 @@
 #include "CoopPuzzle/Object/EventTriggerObjectBase.h"
 #include "CoopPuzzle/Player/CoopPuzzlePlayerController.h"
 #include "CoopPuzzle/Subsystem/EventTriggerManagerSubsystem.h"
+#include "CoopPuzzle/Game/CoopPuzzleGameInstance.h"
 
 ACoopPuzzleCharacter::ACoopPuzzleCharacter()
 {
@@ -35,6 +36,18 @@ ACoopPuzzleCharacter::ACoopPuzzleCharacter()
 
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+}
+
+void ACoopPuzzleCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if( GetNetMode() == NM_DedicatedServer )
+	{
+		UCoopPuzzleGameInstance* pGameInstance = static_cast< UCoopPuzzleGameInstance* >( GetGameInstance() );
+		if( IsValid( pGameInstance ) == true )
+			m_iPlayerUID = pGameInstance->GenerateUID_DE();
+	}
 }
 
 void ACoopPuzzleCharacter::PossessedBy( AController* NewController )
@@ -68,15 +81,11 @@ void ACoopPuzzleCharacter::OnKeyPressed_DE( EPlayerInputType ePlayerInputType ) 
 	{
 	case EPlayerInputType::Interact:
 	{
-		if( IsValid( m_pInteractableEventTrigger ) == false || IsValid( GetGameInstance() ) == false )
-			return;
-
-		UEventTriggerManagerSubsystem* pTriggerManagerSubsystem = GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>();
+		UEventTriggerManagerSubsystem* pTriggerManagerSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>() : nullptr;
 		if( IsValid( pTriggerManagerSubsystem ) == false )
 			return;
 
-		pTriggerManagerSubsystem->TriggerEvent( m_pInteractableEventTrigger->GetEventTriggerID(), this );
-
+		pTriggerManagerSubsystem->TriggerEvent( GetPlayerUID(), EEventTriggerMode::InputInteractKey );
 	} break;
 	default:
 		break;

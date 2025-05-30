@@ -16,4 +16,9 @@ class COOPPUZZLE_API UCoopPuzzleGameInstance : public UGameInstance
 	
 public:
 	virtual void Init() override;
+
+	int64 GenerateUID_DE();
+
+private:
+	int64 m_iNextUID = 0;
 };

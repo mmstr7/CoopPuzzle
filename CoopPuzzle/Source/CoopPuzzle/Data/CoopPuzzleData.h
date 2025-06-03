@@ -20,6 +20,12 @@ struct FEventTriggerDataRow : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 조건" ) )
     EEventTriggerCondition EventTriggerCondition = EEventTriggerCondition::None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "결과에 따른 전체 알림 텍스트" ) )
+    TMap<EEventTriggerResult, FText> GlobalNotifications;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "결과에 따른 로컬 알림 텍스트" ) )
+    TMap<EEventTriggerResult, FText> LocalNotifications;
 };
 
 USTRUCT(BlueprintType)

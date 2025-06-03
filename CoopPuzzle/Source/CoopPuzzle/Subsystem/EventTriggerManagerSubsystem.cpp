@@ -6,6 +6,7 @@
 #include "CoopPuzzle/Subsystem/DataTableSubsystem.h"
 #include "CoopPuzzle/Player/CoopPuzzleCharacter.h"
 #include "CoopPuzzle/Object/EventTriggerObjectBase.h"
+#include "CoopPuzzle/Subsystem/WidgetDelegateSubsystem.h"
 
 DEFINE_LOG_CATEGORY( LogEventTriggerManagerSubsystem );
 
@@ -29,7 +30,21 @@ void UEventTriggerManagerSubsystem::TriggerEvent( const int64& iPlayerUID, EEven
     if( pEventTriggerData->EventTriggerMode != eEventTriggerMode )
         return;
 
-    // 조건 체크
+    // TODO: 조건 체크
+
+    EEventTriggerResult eResult = EEventTriggerResult::Success;
+
+
+    // 위젯 알림 출력
+    UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>();
+    if( IsValid( pWidgetDelegateSubsystem ) == true )
+    {
+        if( const FText* pGlobalNotification = pEventTriggerData->GlobalNotifications.Find( eResult ) )
+            pWidgetDelegateSubsystem->OnShowGlobalNotification.Broadcast( *pGlobalNotification );
+
+        if( const FText* pLocalNotification = pEventTriggerData->LocalNotifications.Find( eResult ) )
+            pWidgetDelegateSubsystem->OnShowLocalNotification.Broadcast( iPlayerUID, *pLocalNotification );
+    }
 
     pCompletedDelegate->ExecuteIfBound( EEventTriggerResult::Success );
 }

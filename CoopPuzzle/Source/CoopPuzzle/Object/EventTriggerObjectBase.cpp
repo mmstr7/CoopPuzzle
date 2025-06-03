@@ -33,7 +33,7 @@ void AEventTriggerObjectBase::GetLifetimeReplicatedProps( TArray<FLifetimeProper
 {
 	Super::GetLifetimeReplicatedProps( OutLifetimeProps );
 
-	DOREPLIFETIME( AEventTriggerObjectBase, R_eTriggerState );
+	//DOREPLIFETIME( AEventTriggerObjectBase, R_eTriggerState );
 
 }
 
@@ -86,9 +86,6 @@ void AEventTriggerObjectBase::EndPlay( const EEndPlayReason::Type EndPlayReason 
 
 void AEventTriggerObjectBase::OnTriggerVolumeBeginOverlap_DE( class UPrimitiveComponent* pOverlappedComp, class AActor* pOtherActor, class UPrimitiveComponent* pOtherComp, int32 iOtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult )
 {
-	if( R_eTriggerState != EEventTriggerState::Enabled )
-		return;
-
 	ACoopPuzzleCharacter* pPlayer = static_cast< ACoopPuzzleCharacter* >( pOtherActor );
 	if( IsValid( pPlayer ) == false )
 		return;
@@ -121,15 +118,9 @@ void AEventTriggerObjectBase::OnTriggered_DE( EEventTriggerResult eResult )
 	checkf( IsNetMode( NM_DedicatedServer ) == true, TEXT( "Dedicated Server Only." ) );
 	checkf( eResult != EEventTriggerResult::None , TEXT( "eResult is None. Please check call site." ) );
 
-
-
-
-	R_eTriggerState = EEventTriggerState::Triggered;
-
-
+	CLIENT_OnTriggered( eResult );
 }
 
-void AEventTriggerObjectBase::OnRep_TriggerState_Implementation()
+void AEventTriggerObjectBase::CLIENT_OnTriggered_Implementation( EEventTriggerResult eResult )
 {
-	UE_LOG( LogTemp, Error, TEXT( "OnRep_TriggerState" ) );
 }

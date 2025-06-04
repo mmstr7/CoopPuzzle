@@ -7,6 +7,7 @@
 #include "CoopPuzzle/Player/CoopPuzzleCharacter.h"
 #include "CoopPuzzle/Object/EventTriggerObjectBase.h"
 #include "CoopPuzzle/Subsystem/WidgetDelegateSubsystem.h"
+#include "CoopPuzzle/Subsystem/WorldActorManagerSubsystem.h"
 
 DEFINE_LOG_CATEGORY( LogEventTriggerManagerSubsystem );
 
@@ -30,10 +31,33 @@ void UEventTriggerManagerSubsystem::TriggerEvent( const int64& iPlayerUID, EEven
     if( pEventTriggerData->EventTriggerMode != eEventTriggerMode )
         return;
 
-    // TODO: 조건 체크
+    // 조건 체크
+    EEventTriggerResult eResult = EEventTriggerResult::Failed;
+    switch( pEventTriggerData->EventTriggerCondition )
+    {
+    case EEventTriggerCondition::Unconditional:
+    {
+        eResult = EEventTriggerResult::Success;
+    } break;
+    case EEventTriggerCondition::OverlapConditionVolume:
+    {
+        UWorldActorManagerSubsystem* pWorldActorManager = GetGameInstance()->GetSubsystem<UWorldActorManagerSubsystem>();
+        if( IsValid( pWorldActorManager ) == false )
+            break;
 
-    EEventTriggerResult eResult = EEventTriggerResult::Success;
+        TWeakObjectPtr<ACoopPuzzleCharacter> pPlayer = pWorldActorManager->GetPlayer( iPlayerUID );
+        TWeakObjectPtr<AEventTriggerObjectBase> pEventTrigger = pWorldActorManager->GetEventTrigger( *pEventTriggerID );
+        if( pPlayer.IsValid() == false || pEventTrigger.IsValid() == false )
+            break;
 
+        if( pEventTrigger->IsConditionOverlappingPlayer( pPlayer.Get() ) == false )
+            break;
+
+        eResult = EEventTriggerResult::Success;
+    } break;
+    default:
+        break;
+    }
 
     // 위젯 알림 출력
     UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>();
@@ -49,12 +73,12 @@ void UEventTriggerManagerSubsystem::TriggerEvent( const int64& iPlayerUID, EEven
     pCompletedDelegate->ExecuteIfBound( EEventTriggerResult::Success );
 }
 
-void UEventTriggerManagerSubsystem::RegisterEventTrigger( const FName& EventTriggerID, FOnEventTriggerCompleted OnCompletedCallback )
+void UEventTriggerManagerSubsystem::RegisterEventTriggerCallback( const FName& EventTriggerID, FOnEventTriggerCompleted OnCompletedCallback )
 {
     mapTriggerCompletedDelegates.Add( EventTriggerID, OnCompletedCallback );
 }
 
-void UEventTriggerManagerSubsystem::UnregisterEventTrigger( const FName& EventTriggerID )
+void UEventTriggerManagerSubsystem::UnregisterEventTriggerCallback( const FName& EventTriggerID )
 {
     mapTriggerCompletedDelegates.Remove( EventTriggerID );
 }

@@ -9,32 +9,34 @@
 #include "Components/StaticMeshComponent.h"
 #include "CoopPuzzle/Game/CoopPuzzleGameInstance.h"
 #include "Net/UnrealNetwork.h"
+#include "CoopPuzzle/Subsystem/WorldActorManagerSubsystem.h"
 
 
 AEventTriggerObjectBase::AEventTriggerObjectBase()
 {
 	bReplicates = true;
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	DefaultMesh = CreateDefaultSubobject<UStaticMeshComponent>( TEXT( "DefaultMesh" ) );
-	if( IsValid( DefaultMesh ) == true )
-	{
-		SetRootComponent( DefaultMesh );
-	}
+	SetRootComponent( DefaultMesh );
 
 	TriggerVolume = CreateDefaultSubobject<UBoxComponent>( TEXT( "TriggerVolume" ) );
-	if( IsValid( TriggerVolume ) == true )
-	{
-		TriggerVolume->SetupAttachment( RootComponent );
-	}
+	TriggerVolume->SetupAttachment( RootComponent );
+
+	ConditionVolume = CreateDefaultSubobject<UBoxComponent>( TEXT( "ConditionVolume" ) );
+	ConditionVolume->SetupAttachment( RootComponent );
+}
+
+bool AEventTriggerObjectBase::IsConditionOverlappingPlayer( const ACoopPuzzleCharacter* pPlayer ) const
+{
+	return IsValid( ConditionVolume ) == true && ConditionVolume->IsOverlappingActor( pPlayer ) == true;
 }
 
 void AEventTriggerObjectBase::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
 {
 	Super::GetLifetimeReplicatedProps( OutLifetimeProps );
 
-	//DOREPLIFETIME( AEventTriggerObjectBase, R_eTriggerState );
-
+	DOREPLIFETIME( AEventTriggerObjectBase, R_eTriggerState );
 }
 
 void AEventTriggerObjectBase::PostInitializeComponents()
@@ -63,10 +65,19 @@ void AEventTriggerObjectBase::BeginPlay()
 
 	if( IsNetMode( NM_DedicatedServer ) == true )
 	{
+		SetTriggerState_DE( m_pEventTriggerData->DefaultState );
+
 		UEventTriggerManagerSubsystem* pEventTriggerSubsystem = GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>();
-		checkf( IsValid( pEventTriggerSubsystem ) == true, TEXT( "EventTriggerSubsystem is not valid. Please check class." ) );
-		
-		pEventTriggerSubsystem->RegisterEventTrigger( GetEventTriggerID(), FOnEventTriggerCompleted::CreateUObject( this, &AEventTriggerObjectBase::OnTriggered_DE ) );
+		if( IsValid( pEventTriggerSubsystem ) == true )
+		{
+			pEventTriggerSubsystem->RegisterEventTriggerCallback( GetEventTriggerID(), FOnEventTriggerCompleted::CreateUObject( this, &AEventTriggerObjectBase::OnTriggered_DE ) );
+		}
+
+		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = GetGameInstance()->GetSubsystem<UWorldActorManagerSubsystem>();
+		if( IsValid( pWorldActorManagerSubsystem ) == true )
+		{
+			pWorldActorManagerSubsystem->RegisterEventTrigger( this );
+		}
 	}
 }
 
@@ -76,10 +87,19 @@ void AEventTriggerObjectBase::EndPlay( const EEndPlayReason::Type EndPlayReason 
 
 	if( IsNetMode( NM_DedicatedServer ) == true )
 	{
-		UEventTriggerManagerSubsystem* pEventTriggerSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>() : nullptr;
+		if( IsValid( GetGameInstance() ) == false )
+			return;
+
+		UEventTriggerManagerSubsystem* pEventTriggerSubsystem = GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>();
 		if( IsValid( pEventTriggerSubsystem ) == true )
 		{
-			pEventTriggerSubsystem->UnregisterEventTrigger( GetEventTriggerID() );
+			pEventTriggerSubsystem->UnregisterEventTriggerCallback( GetEventTriggerID() );
+		}
+
+		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = GetGameInstance()->GetSubsystem<UWorldActorManagerSubsystem>();
+		if( IsValid( pWorldActorManagerSubsystem ) == true )
+		{
+			pWorldActorManagerSubsystem->UnregisterEventTrigger( GetEventTriggerID() );
 		}
 	}
 }
@@ -97,7 +117,9 @@ void AEventTriggerObjectBase::OnTriggerVolumeBeginOverlap_DE( class UPrimitiveCo
 	pEventTriggerSubsystem->LinkPlayerToEventTrigger( pPlayer->GetPlayerUID(), GetEventTriggerID() );
 
 	if( m_pEventTriggerData->EventTriggerMode == EEventTriggerMode::InTriggerVolume )
+	{
 		pEventTriggerSubsystem->TriggerEvent( pPlayer->GetPlayerUID(), EEventTriggerMode::InTriggerVolume );
+	}
 }
 
 void AEventTriggerObjectBase::OnTriggerVolumeEndOverlap_DE( class UPrimitiveComponent* pOverlappedComp, AActor* pOtherActor, UPrimitiveComponent* pOtherComp, int32 iOtherBodyIndex )
@@ -116,11 +138,39 @@ void AEventTriggerObjectBase::OnTriggerVolumeEndOverlap_DE( class UPrimitiveComp
 void AEventTriggerObjectBase::OnTriggered_DE( EEventTriggerResult eResult )
 {
 	checkf( IsNetMode( NM_DedicatedServer ) == true, TEXT( "Dedicated Server Only." ) );
-	checkf( eResult != EEventTriggerResult::None , TEXT( "eResult is None. Please check call site." ) );
 
-	CLIENT_OnTriggered( eResult );
+	switch( eResult )
+	{
+	case EEventTriggerResult::Success:
+	{
+		SetTriggerState_DE( EEventTriggerState::Triggered );
+	} break;
+	case EEventTriggerResult::Failed:
+	{
+		// 아무 일도 일어나지 않음
+	} break;
+	case EEventTriggerResult::ForceChangeStateEnable:
+	{
+		SetTriggerState_DE( EEventTriggerState::Enabled );
+	} break;
+	case EEventTriggerResult::ForceChangeStateDisable:
+	{
+		SetTriggerState_DE( EEventTriggerState::Disabled );
+	} break;
+	default:
+	{
+		// TODO: 올바르지 않은 타입이라고 checkf 추가
+	} break;
+	}
 }
 
-void AEventTriggerObjectBase::CLIENT_OnTriggered_Implementation( EEventTriggerResult eResult )
+void AEventTriggerObjectBase::SetTriggerState_DE( EEventTriggerState eTriggerState )
 {
+	checkf( IsNetMode( NM_DedicatedServer ) == true, TEXT( "Dedicated Server Only." ) );
+
+	if( eTriggerState == R_eTriggerState )
+		return;
+
+	R_eTriggerState = eTriggerState;
+	OnRep_TriggerState();
 }

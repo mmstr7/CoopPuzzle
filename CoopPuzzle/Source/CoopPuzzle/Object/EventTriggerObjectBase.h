@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,12 +7,13 @@
 #include "CoopPuzzle/Data/CoopPuzzleEnums.h"
 #include "EventTriggerObjectBase.generated.h"
 
+class ACoopPuzzleCharacter;
 struct FEventTriggerDataRow;
 
 /**
- * Æ®¸®°Å º¼·ı¿¡ ÁøÀÔÇÑ ÇÃ·¹ÀÌ¾î°¡ ÀÌº¥Æ®¸¦ ½ÇÇàÇÒ ¼ö ÀÖ´Â Æ®¸®°Å ¾×ÅÍÀÔ´Ï´Ù.
- * EventTriggerID°¡ EventTriggerDataTableÀÇ Å°¿Í ÀÏÄ¡ÇØ¾ß »ç¿ë °¡´ÉÇÕ´Ï´Ù.
- * ½ÇÁ¦ ÀÌº¥Æ® ½ÇÇàÀº UEventTriggerManagerSubsystemÀÌ Ã³¸®ÇÕ´Ï´Ù.
+ * íŠ¸ë¦¬ê±° ë³¼ë¥¨ì— ì§„ì…í•œ í”Œë ˆì´ì–´ê°€ ì´ë²¤íŠ¸ë¥¼ ì‹¤í–‰í•  ìˆ˜ ìˆëŠ” íŠ¸ë¦¬ê±° ì•¡í„°ì…ë‹ˆë‹¤.
+ * EventTriggerIDê°€ EventTriggerDataTableì˜ í‚¤ì™€ ì¼ì¹˜í•´ì•¼ ì‚¬ìš© ê°€ëŠ¥í•©ë‹ˆë‹¤.
+ * ì‹¤ì œ ì´ë²¤íŠ¸ ì‹¤í–‰ì€ UEventTriggerManagerSubsystemì´ ì²˜ë¦¬í•©ë‹ˆë‹¤.
  */
 UCLASS(BlueprintType)
 class COOPPUZZLE_API AEventTriggerObjectBase : public AActor
@@ -24,11 +25,19 @@ public:
 
 	FORCEINLINE const FName& GetEventTriggerID() const { return EventTriggerID; }
 
+	UFUNCTION( BlueprintCallable )
+	FORCEINLINE EEventTriggerState GetTriggerState() const { return R_eTriggerState; }
+
+	bool IsConditionOverlappingPlayer( const ACoopPuzzleCharacter* pPlayer ) const;
+
 protected:
 	virtual void GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const override;
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay( const EEndPlayReason::Type EndPlayReason ) override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnRep_TriggerState();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Setting)
 	FName EventTriggerID = "";
@@ -38,6 +47,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class UBoxComponent* TriggerVolume = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	class UBoxComponent* ConditionVolume = nullptr;
 
 private:
 	UFUNCTION()
@@ -49,9 +61,12 @@ private:
 	UFUNCTION()
 	void OnTriggered_DE( EEventTriggerResult eResult );
 
-	UFUNCTION( Client, Reliable )
-	void CLIENT_OnTriggered( EEventTriggerResult eResult );
-	void CLIENT_OnTriggered_Implementation( EEventTriggerResult eResult );
+	UFUNCTION()
+	void SetTriggerState_DE( EEventTriggerState eTriggerState );
+
+	// ë°˜ë“œì‹œ SetTriggerState_DE()ë¥¼ í†µí•´ì„œë§Œ R_eTriggerStateë¥¼ ë³€ê²½í•  ê²ƒ!
+	UPROPERTY( ReplicatedUsing=OnRep_TriggerState )
+	EEventTriggerState R_eTriggerState = EEventTriggerState::Disabled;
 
 	const FEventTriggerDataRow* m_pEventTriggerData = nullptr;
 };

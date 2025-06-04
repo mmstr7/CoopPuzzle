@@ -9,6 +9,7 @@
 #include "CoopPuzzle/Player/CoopPuzzlePlayerController.h"
 #include "CoopPuzzle/Subsystem/EventTriggerManagerSubsystem.h"
 #include "CoopPuzzle/Game/CoopPuzzleGameInstance.h"
+#include "CoopPuzzle/Subsystem/WorldActorManagerSubsystem.h"
 
 ACoopPuzzleCharacter::ACoopPuzzleCharacter()
 {
@@ -45,8 +46,33 @@ void ACoopPuzzleCharacter::BeginPlay()
 	if( GetNetMode() == NM_DedicatedServer )
 	{
 		UCoopPuzzleGameInstance* pGameInstance = static_cast< UCoopPuzzleGameInstance* >( GetGameInstance() );
-		if( IsValid( pGameInstance ) == true )
-			m_iPlayerUID = pGameInstance->GenerateUID_DE();
+		if( IsValid( pGameInstance ) == false )
+			return;
+
+		m_iPlayerUID = pGameInstance->GenerateUID_DE();
+
+		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = pGameInstance->GetSubsystem<UWorldActorManagerSubsystem>();
+		if( IsValid( pWorldActorManagerSubsystem ) == true )
+		{
+			pWorldActorManagerSubsystem->RegisterPlayer( this );
+		}
+	}
+}
+
+void ACoopPuzzleCharacter::EndPlay( const EEndPlayReason::Type EndPlayReason )
+{
+	Super::EndPlay( EndPlayReason );
+
+	if( GetNetMode() == NM_DedicatedServer )
+	{
+		if( IsValid( GetGameInstance() ) == false )
+			return;
+		
+		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = GetGameInstance()->GetSubsystem<UWorldActorManagerSubsystem>();
+		if( IsValid( pWorldActorManagerSubsystem ) == true )
+		{
+			pWorldActorManagerSubsystem->UnregisterPlayer( GetPlayerUID() );
+		}
 	}
 }
 
@@ -59,7 +85,9 @@ void ACoopPuzzleCharacter::PossessedBy( AController* NewController )
 		return;
 
 	if( m_pPlayerController->OnInputAction_DE.IsBound() == false )
+	{
 		m_pPlayerController->OnInputAction_DE.AddUObject( this, &ACoopPuzzleCharacter::OnKeyPressed_DE );
+	}
 }
 
 void ACoopPuzzleCharacter::UnPossessed()

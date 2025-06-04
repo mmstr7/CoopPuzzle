@@ -7,7 +7,6 @@
 UENUM(BlueprintType)
 enum class EEventTriggerState : uint8
 {
-	None				UMETA( Hidden ),
 	Disabled			UMETA( DisplayName = "Disabled" ),
 	Enabled				UMETA( DisplayName = "Enabled" ),
 	Triggered			UMETA( DisplayName = "Triggered" ),
@@ -24,15 +23,16 @@ enum class EEventTriggerMode : uint8
 UENUM(BlueprintType)
 enum class EEventTriggerCondition : uint8
 {
-	None				UMETA( Hidden ),
-	Unconditional		UMETA( DisplayName = "Unconditional" ),
+	None					UMETA( Hidden ),
+	Unconditional			UMETA( DisplayName = "Unconditional" ),
+	OverlapConditionVolume	UMETA( DisplayName = "OverlapConditionVolume" ),
 };
 
 UENUM(BlueprintType)
 enum class EEventTriggerSuccessEffect : uint8
 {
-    None                UMETA(Hidden),
-    CallCustomEvent     UMETA(DisplayName = "CallCustomEvent"),
+	None                UMETA( Hidden ),
+	CallCustomEvent     UMETA( DisplayName = "CallCustomEvent" ),
 };
 
 UENUM(BlueprintType)
@@ -45,9 +45,11 @@ enum class EEventTriggerFailureEffect : uint8
 UENUM( BlueprintType )
 enum class EEventTriggerResult : uint8
 {
-	None				UMETA( Hidden ),
-	Success				UMETA( DisplayName = "Success" ),
-	Failed 				UMETA( DisplayName = "Failed" ),
+	None					UMETA( Hidden ),
+	Success					UMETA( DisplayName = "Success" ),
+	Failed 					UMETA( DisplayName = "Failed" ),
+	ForceChangeStateEnable 	UMETA( DisplayName = "ForceChangeStateEnable" ),
+	ForceChangeStateDisable UMETA( DisplayName = "ForceChangeStateDisable" ),
 };
 
 UENUM(BlueprintType)
@@ -64,4 +66,3 @@ enum class EDataTableType : uint8
 	Item				UMETA( DisplayName = "ItemDataTable" ),
 	MAX					UMETA( Hidden ),
 };
-

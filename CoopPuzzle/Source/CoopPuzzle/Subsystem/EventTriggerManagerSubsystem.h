@@ -27,8 +27,8 @@ class COOPPUZZLE_API UEventTriggerManagerSubsystem : public UGameInstanceSubsyst
 public:
 	void TriggerEvent( const int64& iPlayerUID, EEventTriggerMode eEventTriggerMode );
 
-	void RegisterEventTrigger( const FName& EventTriggerID, FOnEventTriggerCompleted OnCompletedCallback );
-	void UnregisterEventTrigger( const FName& EventTriggerID );
+	void RegisterEventTriggerCallback( const FName& EventTriggerID, FOnEventTriggerCompleted OnCompletedCallback );
+	void UnregisterEventTriggerCallback( const FName& EventTriggerID );
 
 	void LinkPlayerToEventTrigger( const int64& iPlayerUID, const FName& EventTriggerID );
 	void UnlinkPlayerToEventTrigger( const int64& iPlayerUID, const FName& EventTriggerID );

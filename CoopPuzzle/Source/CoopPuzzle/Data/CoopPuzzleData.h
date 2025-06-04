@@ -15,6 +15,9 @@ struct FEventTriggerDataRow : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FString Comment = "";
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "기본 상태" ) )
+    EEventTriggerState DefaultState = EEventTriggerState::Enabled;
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 모드" ) )
     EEventTriggerMode EventTriggerMode = EEventTriggerMode::None;
 

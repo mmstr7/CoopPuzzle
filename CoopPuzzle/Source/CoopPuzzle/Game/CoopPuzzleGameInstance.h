@@ -15,8 +15,6 @@ class COOPPUZZLE_API UCoopPuzzleGameInstance : public UGameInstance
 	GENERATED_BODY()
 	
 public:
-	virtual void Init() override;
-
 	int64 GenerateUID_DE();
 
 private:

@@ -8,6 +8,7 @@
 #include "CoopPuzzle/Object/EventTriggerObjectBase.h"
 #include "CoopPuzzle/Subsystem/WidgetDelegateSubsystem.h"
 #include "CoopPuzzle/Subsystem/WorldActorManagerSubsystem.h"
+#include "CoopPuzzle/Subsystem/ItemSubsystem.h"
 
 DEFINE_LOG_CATEGORY( LogEventTriggerManagerSubsystem );
 
@@ -33,7 +34,7 @@ void UEventTriggerManagerSubsystem::TriggerEvent( const int64& iPlayerUID, EEven
 
     // 조건 체크
     EEventTriggerResult eResult = EEventTriggerResult::Failed;
-    switch( pEventTriggerData->EventTriggerCondition )
+    switch( pEventTriggerData->EventTriggerCondition.ConditionType )
     {
     case EEventTriggerCondition::Unconditional:
     {
@@ -55,8 +56,71 @@ void UEventTriggerManagerSubsystem::TriggerEvent( const int64& iPlayerUID, EEven
 
         eResult = EEventTriggerResult::Success;
     } break;
+    case EEventTriggerCondition::HasItem_Consume:
+    {
+        UItemSubsystem* pItemSubsystem = GetGameInstance()->GetSubsystem<UItemSubsystem>();
+        if( IsValid( pItemSubsystem ) == false )
+            break;
+
+        TMap<FName, int32> mapConsumeItems = pEventTriggerData->EventTriggerCondition.Params;
+        for( TPair<FName, int32>& pairConsumeItem : mapConsumeItems )
+        {
+            checkf( pairConsumeItem.Value > 0, TEXT( "Item count must be greater than zero. (ItemID: %s)" ), *pairConsumeItem.Key.ToString() );
+            pairConsumeItem.Value *= -1;
+        }
+
+        // 필요한 아이템을 모두 사용 할 수 없다면 실패
+        if( pItemSubsystem->AddItems_DE( iPlayerUID, mapConsumeItems ) == false )
+            break;
+
+        eResult = EEventTriggerResult::Success;
+    } break;
+    case EEventTriggerCondition::HasItem_Possession:
+    {
+        UItemSubsystem* pItemSubsystem = GetGameInstance()->GetSubsystem<UItemSubsystem>();
+        if( IsValid( pItemSubsystem ) == false )
+            break;
+
+        // 필요한 아이템을 모두 소지하고 있지 않다면 실패
+        if( pItemSubsystem->HasItems( iPlayerUID, pEventTriggerData->EventTriggerCondition.Params ) == false )
+            break;
+        
+        eResult = EEventTriggerResult::Success;
+    } break;
     default:
-        break;
+    {
+        // checkf 출력 필요
+    } break;
+    }
+
+    // 성공 시 효과 실행
+    if( eResult == EEventTriggerResult::Success )
+    {
+        switch( pEventTriggerData->EventTriggerSuccessEffect.EffectType )
+        {
+        case EEventTriggerSuccessEffect::None:
+        {
+
+        } break;
+        case EEventTriggerSuccessEffect::GainItem:
+        {
+            UItemSubsystem* pItemSubsystem = GetGameInstance()->GetSubsystem<UItemSubsystem>();
+            if( IsValid( pItemSubsystem ) == false )
+                break;
+
+            for( const TPair<FName, int32>& pairItemToAdd : pEventTriggerData->EventTriggerSuccessEffect.Params )
+            {
+                checkf( pairItemToAdd.Value > 0, TEXT( "Item count must be greater than zero. (ItemID: %s)" ), *pairItemToAdd.Key.ToString() );
+            }
+
+            bool bAddSuccess = pItemSubsystem->AddItems_DE( iPlayerUID, pEventTriggerData->EventTriggerSuccessEffect.Params );
+            checkf( bAddSuccess, TEXT( "GainItem Failed!" ) );
+        } break;
+        default:
+        {
+            // checkf 출력 필요
+        } break;
+        }
     }
 
     // 위젯 알림 출력
@@ -67,10 +131,10 @@ void UEventTriggerManagerSubsystem::TriggerEvent( const int64& iPlayerUID, EEven
             pWidgetDelegateSubsystem->OnShowGlobalNotification.Broadcast( *pGlobalNotification );
 
         if( const FText* pLocalNotification = pEventTriggerData->LocalNotifications.Find( eResult ) )
-            pWidgetDelegateSubsystem->OnShowLocalNotification.Broadcast( iPlayerUID, *pLocalNotification );
+            pWidgetDelegateSubsystem->OnShowLocalNotification.FindOrAdd( iPlayerUID ).Broadcast( *pLocalNotification );
     }
 
-    pCompletedDelegate->ExecuteIfBound( EEventTriggerResult::Success );
+    pCompletedDelegate->ExecuteIfBound( eResult );
 }
 
 void UEventTriggerManagerSubsystem::RegisterEventTriggerCallback( const FName& EventTriggerID, FOnEventTriggerCompleted OnCompletedCallback )

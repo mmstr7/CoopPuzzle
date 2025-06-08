@@ -4,36 +4,63 @@
 #include "CoopPuzzle/Player/CoopPuzzlePlayerState.h"
 #include "CoopPuzzle/Subsystem/WidgetDelegateSubsystem.h"
 #include "CoopPuzzle/Player/CoopPuzzleCharacter.h"
+#include "CoopPuzzle/Data/CooppuzzleStructs.h"
+#include "CoopPuzzle/Subsystem/ItemSubsystem.h"
 
-void ACoopPuzzlePlayerState::BeginPlay()
+void ACoopPuzzlePlayerState::OnPossessed( int64 iPlayerUID )
 {
-	Super::BeginPlay();
-
 	if( IsNetMode( NM_DedicatedServer ) == true )
 	{
 		// WidgetDelegateSubsystem 헬퍼 함수 바인딩
 		UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
 		if( IsValid( pWidgetDelegateSubsystem ) == true )
 		{
-			pWidgetDelegateSubsystem->OnShowLocalNotification.AddDynamic( this, &ACoopPuzzlePlayerState::OnShowLocalNotification_DE );
+			pWidgetDelegateSubsystem->OnShowLocalNotification.FindOrAdd( iPlayerUID ).AddUObject( this, &ACoopPuzzlePlayerState::CLIENT_OnShowLocalNotification );
+		}
+
+		// ItemSubsystem 헬퍼 함수 바인딩
+		UItemSubsystem* pItemSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UItemSubsystem>() : nullptr;
+		if( IsValid( pItemSubsystem ) == true )
+		{
+			pItemSubsystem->OnUpdateInventoryItem.FindOrAdd( iPlayerUID ).BindUObject( this, &ACoopPuzzlePlayerState::CLIENT_OnUpdateInventoryItem );
 		}
 	}
 }
 
-void ACoopPuzzlePlayerState::OnShowLocalNotification_DE( const int64& iPlayerUID, const FText& Message )
+void ACoopPuzzlePlayerState::OnUnpossessed( int64 iPlayerUID )
 {
-	ACoopPuzzleCharacter* pPlayer = static_cast< ACoopPuzzleCharacter* >( GetPlayerController()->GetPawn() );
-	if( IsValid( pPlayer ) == false || pPlayer->GetPlayerUID() != iPlayerUID )
-		return;
+	if( IsNetMode( NM_DedicatedServer ) == true )
+	{
+		// WidgetDelegateSubsystem 헬퍼 함수 언바인딩
+		UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
+		if( IsValid( pWidgetDelegateSubsystem ) == true )
+		{
+			pWidgetDelegateSubsystem->OnShowLocalNotification.Remove( iPlayerUID );
+		}
 
-	CLIENT_OnShowLocalNotification( iPlayerUID, Message );
+		// ItemSubsystem 헬퍼 함수 언바인딩
+		UItemSubsystem* pItemSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UItemSubsystem>() : nullptr;
+		if( IsValid( pItemSubsystem ) == true )
+		{
+			pItemSubsystem->OnUpdateInventoryItem.Remove( iPlayerUID );
+		}
+	}
 }
 
-void ACoopPuzzlePlayerState::CLIENT_OnShowLocalNotification_Implementation( const int64& iPlayerUID, const FText& Message )
+void ACoopPuzzlePlayerState::CLIENT_OnShowLocalNotification_Implementation( const FText& Message )
 {
 	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
 	if( IsValid( pWidgetDelegateSubsystem ) == false )
 		return;
 
-	pWidgetDelegateSubsystem->OnShowLocalNotification.Broadcast( iPlayerUID, Message );
+	pWidgetDelegateSubsystem->OnShowLocalNotification.FindOrAdd( 0 ).Broadcast( Message );
+}
+
+void ACoopPuzzlePlayerState::CLIENT_OnUpdateInventoryItem_Implementation( const TArray<FItemSyncInfo>& arrUpdateItemInfos )
+{
+	UItemSubsystem* pItemSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UItemSubsystem>() : nullptr;
+	if( IsValid( pItemSubsystem ) == false )
+		return;
+
+	pItemSubsystem->OnUpdateInventoryItem.FindOrAdd( 0 ).ExecuteIfBound( arrUpdateItemInfos );
 }

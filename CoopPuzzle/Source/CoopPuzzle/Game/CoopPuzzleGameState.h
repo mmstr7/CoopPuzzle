@@ -16,6 +16,7 @@ class COOPPUZZLE_API ACoopPuzzleGameState : public AGameState
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay( const EEndPlayReason::Type EndPlayReason ) override;
 
 	UPROPERTY( EditAnywhere, Category = Setting )
 	UUserWidget* MainHUD = nullptr;

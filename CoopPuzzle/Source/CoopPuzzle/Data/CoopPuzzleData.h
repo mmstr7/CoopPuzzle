@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "CoopPuzzle/Data/CoopPuzzleEnums.h"
+#include "CoopPuzzle/Data/CoopPuzzleStructs.h"
 #include "CoopPuzzleData.generated.h"
 
 USTRUCT(BlueprintType)
@@ -22,7 +23,10 @@ struct FEventTriggerDataRow : public FTableRowBase
     EEventTriggerMode EventTriggerMode = EEventTriggerMode::None;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 조건" ) )
-    EEventTriggerCondition EventTriggerCondition = EEventTriggerCondition::None;
+    FEventTriggerConditionParams EventTriggerCondition;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 효과" ) )
+    FEventTriggerSuccessEffectParams EventTriggerSuccessEffect;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "결과에 따른 전체 알림 텍스트" ) )
     TMap<EEventTriggerResult, FText> GlobalNotifications;

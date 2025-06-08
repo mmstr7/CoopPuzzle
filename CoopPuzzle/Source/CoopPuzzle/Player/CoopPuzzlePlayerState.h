@@ -7,6 +7,7 @@
 #include "CoopPuzzlePlayerState.generated.h"
 
 class ACoopPuzzleCharacter;
+struct FItemSyncInfo;
 
 /**
  * WidgetDelegateSubsystem의 DE→CL 네트워크 허브 역할을 담당합니다.
@@ -18,16 +19,20 @@ class COOPPUZZLE_API ACoopPuzzlePlayerState : public APlayerState
 {
 	GENERATED_BODY()
 	
-protected:
-	virtual void BeginPlay() override;
-	
+public:
+	void OnPossessed( int64 iPlayerUID );
+	void OnUnpossessed( int64 iPlayerUID );
+
 private:
 #pragma region [WidgetDelegateSubsystemHelper]
-	UFUNCTION()
-	void OnShowLocalNotification_DE( const int64& iPlayerUID, const FText& Message );
-
 	UFUNCTION( Client, Reliable )
-	void CLIENT_OnShowLocalNotification( const int64& iPlayerUID, const FText& Message );
-	void CLIENT_OnShowLocalNotification_Implementation( const int64& iPlayerUID, const FText& Message );
+	void CLIENT_OnShowLocalNotification( const FText& Message );
+	void CLIENT_OnShowLocalNotification_Implementation( const FText& Message );
+#pragma endregion
+
+#pragma region [ItemSubsystemHelper]
+	UFUNCTION( Client, Reliable )
+	void CLIENT_OnUpdateInventoryItem( const TArray<FItemSyncInfo>& arrUpdateItemInfos );
+	void CLIENT_OnUpdateInventoryItem_Implementation( const TArray<FItemSyncInfo>& arrUpdateItemInfos );
 #pragma endregion
 };

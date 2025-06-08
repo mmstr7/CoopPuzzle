@@ -12,8 +12,8 @@ void UCoopPuzzleMainHUD::NativeConstruct()
 	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
 	if( IsValid( pWidgetDelegateSubsystem ) == true )
 	{
-		pWidgetDelegateSubsystem->OnShowGlobalNotification.AddDynamic( this, &UCoopPuzzleMainHUD::ShowGlobalNotification );
-		pWidgetDelegateSubsystem->OnShowLocalNotification.AddDynamic( this, &UCoopPuzzleMainHUD::ShowLocalNotification );
+		pWidgetDelegateSubsystem->OnShowGlobalNotification.AddUObject( this, &UCoopPuzzleMainHUD::ShowGlobalNotification );
+		pWidgetDelegateSubsystem->OnShowLocalNotification.FindOrAdd( 0 ).AddUObject( this, &UCoopPuzzleMainHUD::ShowLocalNotification );
 	}
 }
 
@@ -25,7 +25,7 @@ void UCoopPuzzleMainHUD::ShowGlobalNotification( const FText& Message )
 	GlobalNotification->AddNotification( Message );
 }
 
-void UCoopPuzzleMainHUD::ShowLocalNotification( const int64& iPlayerUID, const FText& Message )
+void UCoopPuzzleMainHUD::ShowLocalNotification( const FText& Message )
 {
 	if( IsValid( LocalNotification ) == false )
 		return;

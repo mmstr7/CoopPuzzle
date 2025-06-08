@@ -31,5 +31,5 @@ private:
 	void ShowGlobalNotification( const FText& Message );
 
 	UFUNCTION()
-	void ShowLocalNotification( const int64& iPlayerUID, const FText& Message );
+	void ShowLocalNotification( const FText& Message );
 };

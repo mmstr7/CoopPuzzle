@@ -10,6 +10,7 @@
 #include "CoopPuzzle/Subsystem/EventTriggerManagerSubsystem.h"
 #include "CoopPuzzle/Game/CoopPuzzleGameInstance.h"
 #include "CoopPuzzle/Subsystem/WorldActorManagerSubsystem.h"
+#include "CoopPuzzle/Player/CoopPuzzlePlayerState.h"
 
 ACoopPuzzleCharacter::ACoopPuzzleCharacter()
 {
@@ -88,6 +89,12 @@ void ACoopPuzzleCharacter::PossessedBy( AController* NewController )
 	{
 		m_pPlayerController->OnInputAction_DE.AddUObject( this, &ACoopPuzzleCharacter::OnKeyPressed_DE );
 	}
+
+	ACoopPuzzlePlayerState* pPlayerState = static_cast< ACoopPuzzlePlayerState* >( GetPlayerState() );
+	if( IsValid( pPlayerState ) == true )
+	{
+		pPlayerState->OnPossessed( GetPlayerUID() );
+	}
 }
 
 void ACoopPuzzleCharacter::UnPossessed()
@@ -99,6 +106,12 @@ void ACoopPuzzleCharacter::UnPossessed()
 
 	m_pPlayerController->OnInputAction_DE.RemoveAll( this );
 	m_pPlayerController = nullptr;
+
+	ACoopPuzzlePlayerState* pPlayerState = static_cast< ACoopPuzzlePlayerState* >( GetPlayerState() );
+	if( IsValid( pPlayerState ) == true )
+	{
+		pPlayerState->OnUnpossessed( GetPlayerUID() );
+	}
 }
 
 void ACoopPuzzleCharacter::OnKeyPressed_DE( EPlayerInputType ePlayerInputType ) const

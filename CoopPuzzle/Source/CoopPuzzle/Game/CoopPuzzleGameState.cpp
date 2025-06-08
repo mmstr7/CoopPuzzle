@@ -13,9 +13,9 @@ void ACoopPuzzleGameState::BeginPlay()
 	{
 		// WidgetDelegateSubsystem 헬퍼 함수 바인딩
 		UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
-		if( IsValid( pWidgetDelegateSubsystem ) == true )
+		if( IsValid( pWidgetDelegateSubsystem ) == true && pWidgetDelegateSubsystem->OnShowGlobalNotification.IsBoundToObject( this ) == false )
 		{
-			pWidgetDelegateSubsystem->OnShowGlobalNotification.AddDynamic( this, &ACoopPuzzleGameState::MULTI_OnShowGlobalNotification );
+			pWidgetDelegateSubsystem->OnShowGlobalNotification.AddUObject( this, &ACoopPuzzleGameState::MULTI_OnShowGlobalNotification );
 		}
 	}
 	else
@@ -23,6 +23,21 @@ void ACoopPuzzleGameState::BeginPlay()
 		if( IsValid( MainHUD ) == true )
 		{
 			MainHUD->AddToViewport( 0 );
+		}
+	}
+}
+
+void ACoopPuzzleGameState::EndPlay( const EEndPlayReason::Type EndPlayReason )
+{
+	Super::EndPlay( EndPlayReason );
+
+	if( IsNetMode( NM_DedicatedServer ) == true )
+	{
+		// WidgetDelegateSubsystem 헬퍼 함수 언바인딩
+		UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
+		if( IsValid( pWidgetDelegateSubsystem ) == true )
+		{
+			pWidgetDelegateSubsystem->OnShowGlobalNotification.RemoveAll( this );
 		}
 	}
 }

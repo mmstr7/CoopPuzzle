@@ -4,7 +4,7 @@
 #include "CoopPuzzle/Player/CoopPuzzlePlayerState.h"
 #include "CoopPuzzle/Subsystem/WidgetDelegateSubsystem.h"
 #include "CoopPuzzle/Player/CoopPuzzleCharacter.h"
-#include "CoopPuzzle/Data/CooppuzzleStructs.h"
+#include "CoopPuzzle/Data/CoopPuzzleStructs.h"
 #include "CoopPuzzle/Subsystem/ItemSubsystem.h"
 
 void ACoopPuzzlePlayerState::OnPossessed( int64 iPlayerUID )
@@ -16,6 +16,7 @@ void ACoopPuzzlePlayerState::OnPossessed( int64 iPlayerUID )
 		if( IsValid( pWidgetDelegateSubsystem ) == true )
 		{
 			pWidgetDelegateSubsystem->OnShowLocalNotification.FindOrAdd( iPlayerUID ).AddUObject( this, &ACoopPuzzlePlayerState::CLIENT_OnShowLocalNotification );
+			pWidgetDelegateSubsystem->OnPlayerInventoryUpdated.FindOrAdd( iPlayerUID ).AddUObject( this, &ACoopPuzzlePlayerState::CLIENT_OnPlayerInventoryUpdated );
 		}
 
 		// ItemSubsystem 헬퍼 함수 바인딩
@@ -36,6 +37,7 @@ void ACoopPuzzlePlayerState::OnUnpossessed( int64 iPlayerUID )
 		if( IsValid( pWidgetDelegateSubsystem ) == true )
 		{
 			pWidgetDelegateSubsystem->OnShowLocalNotification.Remove( iPlayerUID );
+			pWidgetDelegateSubsystem->OnPlayerInventoryUpdated.Remove( iPlayerUID );
 		}
 
 		// ItemSubsystem 헬퍼 함수 언바인딩
@@ -47,6 +49,7 @@ void ACoopPuzzlePlayerState::OnUnpossessed( int64 iPlayerUID )
 	}
 }
 
+#pragma region [WidgetDelegateSubsystemHelper]
 void ACoopPuzzlePlayerState::CLIENT_OnShowLocalNotification_Implementation( const FText& Message )
 {
 	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
@@ -56,6 +59,17 @@ void ACoopPuzzlePlayerState::CLIENT_OnShowLocalNotification_Implementation( cons
 	pWidgetDelegateSubsystem->OnShowLocalNotification.FindOrAdd( 0 ).Broadcast( Message );
 }
 
+void ACoopPuzzlePlayerState::CLIENT_OnPlayerInventoryUpdated_Implementation()
+{
+	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
+	if( IsValid( pWidgetDelegateSubsystem ) == false )
+		return;
+
+	pWidgetDelegateSubsystem->OnPlayerInventoryUpdated.FindOrAdd( 0 ).Broadcast();
+}
+#pragma endregion
+
+#pragma region [ItemSubsystemHelper]
 void ACoopPuzzlePlayerState::CLIENT_OnUpdateInventoryItem_Implementation( const TArray<FItemSyncInfo>& arrUpdateItemInfos )
 {
 	UItemSubsystem* pItemSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UItemSubsystem>() : nullptr;
@@ -64,3 +78,4 @@ void ACoopPuzzlePlayerState::CLIENT_OnUpdateInventoryItem_Implementation( const 
 
 	pItemSubsystem->OnUpdateInventoryItem.FindOrAdd( 0 ).ExecuteIfBound( arrUpdateItemInfos );
 }
+#pragma endregion

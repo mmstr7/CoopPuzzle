@@ -114,7 +114,7 @@ void UEventTriggerManagerSubsystem::TriggerEvent( const int64& iPlayerUID, EEven
             }
 
             bool bAddSuccess = pItemSubsystem->AddItems_DE( iPlayerUID, pEventTriggerData->EventTriggerSuccessEffect.Params );
-            checkf( bAddSuccess, TEXT( "GainItem Failed!" ) );
+            checkf( bAddSuccess == true, TEXT( "GainItem Failed!" ) );
         } break;
         default:
         {

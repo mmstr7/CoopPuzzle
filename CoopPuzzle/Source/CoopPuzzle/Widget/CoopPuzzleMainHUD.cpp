@@ -17,6 +17,18 @@ void UCoopPuzzleMainHUD::NativeConstruct()
 	}
 }
 
+void UCoopPuzzleMainHUD::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
+	if( IsValid( pWidgetDelegateSubsystem ) == true )
+	{
+		pWidgetDelegateSubsystem->OnShowGlobalNotification.RemoveAll( this );
+		pWidgetDelegateSubsystem->OnShowLocalNotification.Remove( 0 );
+	}
+}
+
 void UCoopPuzzleMainHUD::ShowGlobalNotification( const FText& Message )
 {
 	if( IsValid( GlobalNotification ) == false )

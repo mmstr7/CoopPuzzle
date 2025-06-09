@@ -43,8 +43,6 @@ enum class EEventTriggerResult : uint8
 	None					UMETA( Hidden ),
 	Success					UMETA( DisplayName = "Success" ),
 	Failed 					UMETA( DisplayName = "Failed" ),
-	ForceChangeStateEnable 	UMETA( DisplayName = "ForceChangeStateEnable" ),
-	ForceChangeStateDisable UMETA( DisplayName = "ForceChangeStateDisable" ),
 };
 
 UENUM(BlueprintType)

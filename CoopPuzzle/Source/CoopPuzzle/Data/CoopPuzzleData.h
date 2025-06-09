@@ -45,6 +45,9 @@ struct FItemDataRow : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FString Comment = "";
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UTexture2D* ItemIcon = nullptr;
 };
 
 USTRUCT(BlueprintType)

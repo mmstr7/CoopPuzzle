@@ -6,6 +6,11 @@
 
 DEFINE_LOG_CATEGORY( LogDataTableSubsystem );
 
+const UDataTable* UDataTableSubsystem::GetDataTable( EDataTableType eDataTableType ) const
+{
+    return *DataTableMap.Find( eDataTableType );
+}
+
 void UDataTableSubsystem::Initialize( FSubsystemCollectionBase& Collection )
 {
 	Super::Initialize( Collection );

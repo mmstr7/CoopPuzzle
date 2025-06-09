@@ -24,6 +24,7 @@ class COOPPUZZLE_API UWidgetDelegateSubsystem : public UGameInstanceSubsystem
 public:
 	FTextDelegate OnShowGlobalNotification;
 
-	// CL의 경우 PlayerUID는 0으로 통일
-	TMap<int64 /*PlayerUID*/, FTextDelegate> OnShowLocalNotification;
+	TMap<int64 /*PlayerUID (CL은 0으로 통일)*/, FTextDelegate> OnShowLocalNotification;
+
+	TMap<int64 /*PlayerUID (CL은 0으로 통일)*/, FSimpleMulticastDelegate> OnPlayerInventoryUpdated;
 };

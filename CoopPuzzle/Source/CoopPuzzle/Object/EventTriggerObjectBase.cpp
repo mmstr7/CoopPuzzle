@@ -149,14 +149,6 @@ void AEventTriggerObjectBase::OnTriggered_DE( EEventTriggerResult eResult )
 	{
 		// 아무 일도 일어나지 않음
 	} break;
-	case EEventTriggerResult::ForceChangeStateEnable:
-	{
-		SetTriggerState_DE( EEventTriggerState::Enabled );
-	} break;
-	case EEventTriggerResult::ForceChangeStateDisable:
-	{
-		SetTriggerState_DE( EEventTriggerState::Disabled );
-	} break;
 	default:
 	{
 		// TODO: 올바르지 않은 타입이라고 checkf 추가

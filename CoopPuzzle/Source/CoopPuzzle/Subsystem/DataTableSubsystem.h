@@ -27,6 +27,8 @@ public:
 		return DataTableMap.Contains( eDataTableType ) == true && IsValid( DataTableMap[eDataTableType] ) == true ? DataTableMap[eDataTableType]->FindRow<T>( RowName, nullptr ) : nullptr;
 	}
 
+	const UDataTable* GetDataTable( EDataTableType eDataTableType ) const;
+
 protected:
 	virtual void Initialize( FSubsystemCollectionBase& Collection ) override;
 	

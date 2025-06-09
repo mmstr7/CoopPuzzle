@@ -7,8 +7,9 @@
 #include "CoopPuzzleMainHUD.generated.h"
 
 class UNotificationText;
-
 class UTextBlock;
+class UInventoryPanel;
+
 /**
  * 
  */
@@ -19,12 +20,16 @@ class COOPPUZZLE_API UCoopPuzzleMainHUD : public UUserWidget
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 
 	UPROPERTY( EditAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	UNotificationText* GlobalNotification;
 
 	UPROPERTY( EditAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	UNotificationText* LocalNotification;
+
+	UPROPERTY( EditAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UInventoryPanel* InventoryPanel;
 
 private:
 	UFUNCTION()

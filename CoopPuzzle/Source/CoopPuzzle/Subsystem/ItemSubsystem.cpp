@@ -3,8 +3,38 @@
 
 #include "CoopPuzzle/Subsystem/ItemSubsystem.h"
 #include "CoopPuzzle/Game/CoopPuzzleGameInstance.h"
-#include "CoopPuzzle/Data/CooppuzzleStructs.h"
+#include "CoopPuzzle/Data/CoopPuzzleStructs.h"
 #include "CoopPuzzle/Player/CoopPuzzleCharacter.h"
+#include "CoopPuzzle/Subsystem/WidgetDelegateSubsystem.h"
+#include "CoopPuzzle/Subsystem/DataTableSubsystem.h"
+
+int32 UItemSubsystem::GetItemCount( int64 iItemUID ) const
+{
+    return m_mapGeneratedItemInfos.FindRef( iItemUID ).Value;
+}
+
+UTexture2D* UItemSubsystem::GetItemIcon( int64 iItemUID ) const
+{
+    const auto* pItemInfo = m_mapGeneratedItemInfos.Find( iItemUID );
+    if( pItemInfo == nullptr )
+        return nullptr;
+
+    const FItemDataRow* pItemData = m_mapCachedItemData.FindRef( pItemInfo->Key );
+    if( pItemData == nullptr )
+        return nullptr;
+
+    return pItemData->ItemIcon;
+}
+
+void UItemSubsystem::GetPlayerInventoryItemUIDs( int64 iPlayerUID, TArray<int64>& arrItemUIDs, bool bSort )
+{
+    arrItemUIDs = m_mapPlayerInventoryItems.FindRef( iPlayerUID ).Array();
+
+    if( bSort == true )
+    {
+        arrItemUIDs.Sort();
+    }
+}
 
 bool UItemSubsystem::HasItems( int64 iPlayerUID, const TMap<FName, int32>& mapItemInfos ) const
 {
@@ -99,17 +129,20 @@ void UItemSubsystem::Initialize( FSubsystemCollectionBase& Collection )
 
 void UItemSubsystem::UpdateItems( int64 iPlayerUID, const TArray<FItemSyncInfo>& arrUpdateItemInfos )
 {
+    LoadItemDataIfNotLoaded();
+
     TSet<int64/*ItemUID*/>& setPlayerInventoryItems = m_mapPlayerInventoryItems.FindOrAdd( iPlayerUID );
 
     for( const FItemSyncInfo& ItemInfo : arrUpdateItemInfos )
     {
+        checkf( m_mapCachedItemData.Contains( ItemInfo.ItemID ) == true, TEXT( "ItemID '%s' is not valid. Please check ItemDataTable." ), *ItemInfo.ItemID.ToString() );
+
         if( ItemInfo.Count <= 0 )
         {
             setPlayerInventoryItems.Remove( ItemInfo.ItemUID );
             m_mapCachedInventoryItemOwners.Remove( ItemInfo.ItemUID );
             m_mapGeneratedItemUIDs.FindOrAdd( ItemInfo.ItemID ).Remove( ItemInfo.ItemUID );
             m_mapGeneratedItemInfos.Remove( ItemInfo.ItemUID );
-            // TODO: 삭제 이벤트/로깅 등
             continue;
         }
 
@@ -117,6 +150,38 @@ void UItemSubsystem::UpdateItems( int64 iPlayerUID, const TArray<FItemSyncInfo>&
         m_mapCachedInventoryItemOwners.Add( ItemInfo.ItemUID, iPlayerUID );
         m_mapGeneratedItemUIDs.FindOrAdd( ItemInfo.ItemID ).Add( ItemInfo.ItemUID );
         m_mapGeneratedItemInfos.Add( ItemInfo.ItemUID, TPair<FName, int32>( ItemInfo.ItemID, ItemInfo.Count ) );
-        // TODO: 추가/갱신 이벤트/로깅 등
+    }
+
+    if( IsValid( GetGameInstance() ) == false )
+        return;
+
+    if( GetGameInstance()->IsDedicatedServerInstance() == true )
+    {
+        OnUpdateInventoryItem.FindOrAdd( iPlayerUID ).ExecuteIfBound( arrUpdateItemInfos );
+    }
+    else
+    {
+        UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>();
+        if( IsValid( pWidgetDelegateSubsystem ) == true )
+        {
+            pWidgetDelegateSubsystem->OnPlayerInventoryUpdated.FindOrAdd( 0 ).Broadcast();
+        }
+    }
+}
+
+void UItemSubsystem::LoadItemDataIfNotLoaded()
+{
+    if( m_mapCachedItemData.Num() > 0 )
+        return;
+
+    UDataTableSubsystem* pDataTableSubsystem = IsValid(GetGameInstance()) == true ? GetGameInstance()->GetSubsystem<UDataTableSubsystem>() : nullptr;
+    checkf( IsValid( pDataTableSubsystem ) == true, TEXT( "DataTableSubsystem is not valid. Please check class." ) );
+
+    const UDataTable* pItemDataTable = pDataTableSubsystem->GetDataTable( EDataTableType::Item );
+    checkf( IsValid( pItemDataTable ) == true, TEXT( "pItemDataTable is not valid." ) );
+
+    for( const auto& RowPair : pItemDataTable->GetRowMap() )
+    {
+        m_mapCachedItemData.Add( RowPair.Key, reinterpret_cast<FItemDataRow*>( RowPair.Value ) );
     }
 }

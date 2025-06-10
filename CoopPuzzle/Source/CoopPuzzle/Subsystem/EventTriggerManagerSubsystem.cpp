@@ -18,17 +18,20 @@ void UEventTriggerManagerSubsystem::TriggerEvent( const int64& iPlayerUID, EEven
     if( pEventTriggerID == nullptr )
         return;
 
-    UDataTableSubsystem* pDataTableSubsystem = GetGameInstance()->GetSubsystem<UDataTableSubsystem>();
-    checkf( IsValid( pDataTableSubsystem ) == true, TEXT( "DataTableSubsystem is not valid. Please check class." ) );
+    const FEventTriggerHandle* pEventTriggerHandle = mapCachedTriggerHandle.Find( *pEventTriggerID );
+    if( pEventTriggerHandle == nullptr )
+        return;
 
-    const FEventTriggerDataRow* pEventTriggerData = pDataTableSubsystem->GetDataRowOrNull<FEventTriggerDataRow>( EDataTableType::EventTrigger, *pEventTriggerID );
-    checkf( pEventTriggerData != nullptr, TEXT( "EventTriggerID [%s] is not valid. Please check EventDataTable." ), *pEventTriggerID->ToString() );
+    AEventTriggerObjectBase* pEventTrigger = pEventTriggerHandle->EventTrigger.Get();
+    if( IsValid( pEventTrigger ) == false )
+        return;
 
-    const FOnEventTriggerCompleted* pCompletedDelegate = mapTriggerCompletedDelegates.Find( *pEventTriggerID );
-    if( pCompletedDelegate == nullptr )
+    // 스테이트 체크
+    if( pEventTrigger->GetTriggerState() != EEventTriggerState::Enabled )
         return;
 
     // 실행 모드가 일치하는지 확인
+    const FEventTriggerDataRow* pEventTriggerData = pEventTrigger->GetTriggerData();
     if( pEventTriggerData->EventTriggerMode != eEventTriggerMode )
         return;
 
@@ -47,8 +50,7 @@ void UEventTriggerManagerSubsystem::TriggerEvent( const int64& iPlayerUID, EEven
             break;
 
         TWeakObjectPtr<ACoopPuzzleCharacter> pPlayer = pWorldActorManager->GetPlayer( iPlayerUID );
-        TWeakObjectPtr<AEventTriggerObjectBase> pEventTrigger = pWorldActorManager->GetEventTrigger( *pEventTriggerID );
-        if( pPlayer.IsValid() == false || pEventTrigger.IsValid() == false )
+        if( pPlayer.IsValid() == false )
             break;
 
         if( pEventTrigger->IsConditionOverlappingPlayer( pPlayer.Get() ) == false )
@@ -134,31 +136,76 @@ void UEventTriggerManagerSubsystem::TriggerEvent( const int64& iPlayerUID, EEven
             pWidgetDelegateSubsystem->OnShowLocalNotification.FindOrAdd( iPlayerUID ).Broadcast( *pLocalNotification );
     }
 
-    pCompletedDelegate->ExecuteIfBound( eResult );
+    pEventTriggerHandle->OnCompletedDelegate.ExecuteIfBound( eResult );
 }
 
-void UEventTriggerManagerSubsystem::RegisterEventTriggerCallback( const FName& EventTriggerID, FOnEventTriggerCompleted OnCompletedCallback )
+void UEventTriggerManagerSubsystem::RegisterEventTriggerHandle( AEventTriggerObjectBase* pEventTrigger, FOnEventTriggerCompleted OnCompletedCallback )
 {
-    mapTriggerCompletedDelegates.Add( EventTriggerID, OnCompletedCallback );
+    checkf( IsValid( pEventTrigger ) == true, TEXT( "pEventTrigger is not valid." ) );
+
+    mapCachedTriggerHandle.Add( pEventTrigger->GetEventTriggerID(), FEventTriggerHandle( pEventTrigger, OnCompletedCallback ) );
 }
 
-void UEventTriggerManagerSubsystem::UnregisterEventTriggerCallback( const FName& EventTriggerID )
+void UEventTriggerManagerSubsystem::UnregisterEventTriggerHandle( const FName& EventTriggerID )
 {
-    mapTriggerCompletedDelegates.Remove( EventTriggerID );
+    mapCachedTriggerHandle.Remove( EventTriggerID );
+
+    // 트리거 연결 정보 정리
+    for( int64 iPlayerUID : mapLinkedEventTriggerToPlayer.FindRef( EventTriggerID ) )
+    {
+        mapLinkedPlayerToEventTrigger.Remove( iPlayerUID );
+    }
+    mapLinkedEventTriggerToPlayer.Remove( EventTriggerID );
 }
 
 void UEventTriggerManagerSubsystem::LinkPlayerToEventTrigger( const int64& iPlayerUID, const FName& EventTriggerID )
 {
+    // 플레이어 <-> 트리거 연결 정보 갱신
+    if( const FName* pOldEventTriggerID = mapLinkedPlayerToEventTrigger.Find( iPlayerUID ) )
+    {
+        mapLinkedEventTriggerToPlayer.FindOrAdd( *pOldEventTriggerID ).Remove( iPlayerUID );
+    }
+
     mapLinkedPlayerToEventTrigger.Add( iPlayerUID, EventTriggerID );
+    mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerID ).Add( iPlayerUID );
+
+    // 연결과 함께 이벤트 실행해야 하는 모드일 경우
+    const FEventTriggerHandle* pEventTriggerHandle = mapCachedTriggerHandle.Find( EventTriggerID );
+    if( pEventTriggerHandle != nullptr && pEventTriggerHandle->EventTrigger.IsValid() == true )
+    {
+        const FEventTriggerDataRow* pEventTriggerData = pEventTriggerHandle->EventTrigger.Get()->GetTriggerData();
+        if( pEventTriggerData->EventTriggerMode == EEventTriggerMode::InTriggerVolume_Once ||
+            pEventTriggerData->EventTriggerMode == EEventTriggerMode::InTriggerVolume_Stay )
+        {
+            TriggerEvent( iPlayerUID, pEventTriggerData->EventTriggerMode );
+        }
+    }
 }
 
 void UEventTriggerManagerSubsystem::UnlinkPlayerToEventTrigger( const int64& iPlayerUID, const FName& EventTriggerID )
 {
-    const FName* pEventTriggerID = mapLinkedPlayerToEventTrigger.Find( iPlayerUID );
-    if( pEventTriggerID == nullptr || *pEventTriggerID != EventTriggerID )
-        return;
+    // 플레이어 <-> 트리거 연결 정보 갱신
+    mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerID ).Remove( iPlayerUID );
 
-    mapLinkedPlayerToEventTrigger.Remove( iPlayerUID );
+    const FName* pEventTriggerID = mapLinkedPlayerToEventTrigger.Find( iPlayerUID );
+    if( pEventTriggerID != nullptr && *pEventTriggerID == EventTriggerID )
+    {
+        mapLinkedPlayerToEventTrigger.Remove( iPlayerUID );
+    }
+
+    // 트리거에 연결된 유저가 아무도 없을 때 초기화 해야 하는 모드일 경우
+    if( mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerID ).Num() <= 0 )
+    {
+        const FEventTriggerHandle* pEventTriggerHandle = mapCachedTriggerHandle.Find( EventTriggerID );
+        if( pEventTriggerHandle == nullptr || pEventTriggerHandle->EventTrigger.IsValid() == false )
+            return;
+
+        const FEventTriggerDataRow* pEventTriggerData = pEventTriggerHandle->EventTrigger.Get()->GetTriggerData();
+        if( pEventTriggerData->EventTriggerMode == EEventTriggerMode::InTriggerVolume_Stay )
+        {
+            pEventTriggerHandle->OnCompletedDelegate.ExecuteIfBound( EEventTriggerResult::Reset );
+        }
+    }
 }
 
 bool UEventTriggerManagerSubsystem::ShouldCreateSubsystem( UObject* Outer ) const

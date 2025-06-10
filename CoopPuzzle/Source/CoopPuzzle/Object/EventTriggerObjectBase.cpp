@@ -20,6 +20,9 @@ AEventTriggerObjectBase::AEventTriggerObjectBase()
 	DefaultMesh = CreateDefaultSubobject<UStaticMeshComponent>( TEXT( "DefaultMesh" ) );
 	SetRootComponent( DefaultMesh );
 
+	EnableIndicator = CreateDefaultSubobject<UStaticMeshComponent>( TEXT( "EnableIndicator" ) );
+	EnableIndicator->SetupAttachment( RootComponent );
+
 	TriggerVolume = CreateDefaultSubobject<UBoxComponent>( TEXT( "TriggerVolume" ) );
 	TriggerVolume->SetupAttachment( RootComponent );
 
@@ -70,7 +73,7 @@ void AEventTriggerObjectBase::BeginPlay()
 		UEventTriggerManagerSubsystem* pEventTriggerSubsystem = GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>();
 		if( IsValid( pEventTriggerSubsystem ) == true )
 		{
-			pEventTriggerSubsystem->RegisterEventTriggerCallback( GetEventTriggerID(), FOnEventTriggerCompleted::CreateUObject( this, &AEventTriggerObjectBase::OnTriggered_DE ) );
+			pEventTriggerSubsystem->RegisterEventTriggerHandle( this, FOnEventTriggerCompleted::CreateUObject( this, &AEventTriggerObjectBase::OnTriggered_DE ) );
 		}
 
 		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = GetGameInstance()->GetSubsystem<UWorldActorManagerSubsystem>();
@@ -93,13 +96,24 @@ void AEventTriggerObjectBase::EndPlay( const EEndPlayReason::Type EndPlayReason 
 		UEventTriggerManagerSubsystem* pEventTriggerSubsystem = GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>();
 		if( IsValid( pEventTriggerSubsystem ) == true )
 		{
-			pEventTriggerSubsystem->UnregisterEventTriggerCallback( GetEventTriggerID() );
+			pEventTriggerSubsystem->UnregisterEventTriggerHandle( GetEventTriggerID() );
 		}
 
 		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = GetGameInstance()->GetSubsystem<UWorldActorManagerSubsystem>();
 		if( IsValid( pWorldActorManagerSubsystem ) == true )
 		{
 			pWorldActorManagerSubsystem->UnregisterEventTrigger( GetEventTriggerID() );
+		}
+	}
+}
+
+void AEventTriggerObjectBase::OnRep_TriggerState_Implementation()
+{
+	if( IsNetMode( NM_DedicatedServer ) == false )
+	{
+		if( IsValid( EnableIndicator ) == true )
+		{
+			EnableIndicator->SetVisibility( R_eTriggerState == EEventTriggerState::Enabled );
 		}
 	}
 }
@@ -115,11 +129,6 @@ void AEventTriggerObjectBase::OnTriggerVolumeBeginOverlap_DE( class UPrimitiveCo
 		return;
 
 	pEventTriggerSubsystem->LinkPlayerToEventTrigger( pPlayer->GetPlayerUID(), GetEventTriggerID() );
-
-	if( m_pEventTriggerData->EventTriggerMode == EEventTriggerMode::InTriggerVolume )
-	{
-		pEventTriggerSubsystem->TriggerEvent( pPlayer->GetPlayerUID(), EEventTriggerMode::InTriggerVolume );
-	}
 }
 
 void AEventTriggerObjectBase::OnTriggerVolumeEndOverlap_DE( class UPrimitiveComponent* pOverlappedComp, AActor* pOtherActor, UPrimitiveComponent* pOtherComp, int32 iOtherBodyIndex )
@@ -148,6 +157,10 @@ void AEventTriggerObjectBase::OnTriggered_DE( EEventTriggerResult eResult )
 	case EEventTriggerResult::Failed:
 	{
 		// 아무 일도 일어나지 않음
+	} break;
+	case EEventTriggerResult::Reset:
+	{
+		SetTriggerState_DE( m_pEventTriggerData->DefaultState );
 	} break;
 	default:
 	{

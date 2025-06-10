@@ -17,7 +17,8 @@ enum class EEventTriggerMode : uint8
 {
 	None					UMETA( Hidden ),
 	InputInteractKey		UMETA( DisplayName = "InputInteractKey" ),
-	InTriggerVolume			UMETA( DisplayName = "InTriggerVolume" ),
+	InTriggerVolume_Once	UMETA( DisplayName = "InTriggerVolume_Once" ),
+	InTriggerVolume_Stay	UMETA( DisplayName = "InTriggerVolume_Stay" ),
 };
 
 UENUM(BlueprintType)
@@ -43,6 +44,7 @@ enum class EEventTriggerResult : uint8
 	None					UMETA( Hidden ),
 	Success					UMETA( DisplayName = "Success" ),
 	Failed 					UMETA( DisplayName = "Failed" ),
+	Reset 					UMETA( DisplayName = "Reset" ),
 };
 
 UENUM(BlueprintType)

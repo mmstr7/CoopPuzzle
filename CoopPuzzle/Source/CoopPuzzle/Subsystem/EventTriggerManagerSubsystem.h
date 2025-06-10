@@ -11,8 +11,18 @@ class ACoopPuzzleCharacter;
 class AEventTriggerObjectBase;
 
 DECLARE_DELEGATE_OneParam( FOnEventTriggerCompleted, EEventTriggerResult );
-
 DECLARE_LOG_CATEGORY_EXTERN( LogEventTriggerManagerSubsystem, Log, All );
+
+struct FEventTriggerHandle
+{
+public:
+	FEventTriggerHandle() {}
+	FEventTriggerHandle( AEventTriggerObjectBase* pTrigger, FOnEventTriggerCompleted CompletedDelegate )
+		: EventTrigger( pTrigger ), OnCompletedDelegate( CompletedDelegate ) {}
+
+	TWeakObjectPtr<AEventTriggerObjectBase> EventTrigger;
+	FOnEventTriggerCompleted OnCompletedDelegate;
+};
 
 /**
  * DE 전용 서브시스템입니다.
@@ -27,8 +37,8 @@ class COOPPUZZLE_API UEventTriggerManagerSubsystem : public UGameInstanceSubsyst
 public:
 	void TriggerEvent( const int64& iPlayerUID, EEventTriggerMode eEventTriggerMode );
 
-	void RegisterEventTriggerCallback( const FName& EventTriggerID, FOnEventTriggerCompleted OnCompletedCallback );
-	void UnregisterEventTriggerCallback( const FName& EventTriggerID );
+	void RegisterEventTriggerHandle( AEventTriggerObjectBase* pEventTrigger, FOnEventTriggerCompleted OnCompletedCallback );
+	void UnregisterEventTriggerHandle( const FName& EventTriggerID );
 
 	void LinkPlayerToEventTrigger( const int64& iPlayerUID, const FName& EventTriggerID );
 	void UnlinkPlayerToEventTrigger( const int64& iPlayerUID, const FName& EventTriggerID );
@@ -38,5 +48,6 @@ protected:
 
 private:
 	TMap<int64/*PlayerUID*/, FName/*EventTriggerID*/> mapLinkedPlayerToEventTrigger;
-	TMap<FName/*EventTriggerID*/, FOnEventTriggerCompleted> mapTriggerCompletedDelegates;
+	TMap<FName/*EventTriggerID*/, TSet<int64/*PlayerUID*/> > mapLinkedEventTriggerToPlayer;
+	TMap<FName/*EventTriggerID*/, FEventTriggerHandle> mapCachedTriggerHandle;
 };

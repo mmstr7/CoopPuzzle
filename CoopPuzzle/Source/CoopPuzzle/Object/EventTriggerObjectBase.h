@@ -25,6 +25,9 @@ public:
 
 	FORCEINLINE const FName& GetEventTriggerID() const { return EventTriggerID; }
 
+	// 유효성은 BeginPlay의 checkf로 보장되므로 이후에는 null 체크 없이 바로 사용해도 안전합니다.
+	FORCEINLINE const FEventTriggerDataRow* GetTriggerData() const { return m_pEventTriggerData; }
+
 	UFUNCTION( BlueprintCallable )
 	FORCEINLINE EEventTriggerState GetTriggerState() const { return R_eTriggerState; }
 
@@ -36,14 +39,18 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay( const EEndPlayReason::Type EndPlayReason ) override;
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintNativeEvent)
 	void OnRep_TriggerState();
+	void OnRep_TriggerState_Implementation();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Setting)
 	FName EventTriggerID = "";
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class UStaticMeshComponent* DefaultMesh = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	class UStaticMeshComponent* EnableIndicator = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class UBoxComponent* TriggerVolume = nullptr;
@@ -68,5 +75,8 @@ private:
 	UPROPERTY( ReplicatedUsing=OnRep_TriggerState )
 	EEventTriggerState R_eTriggerState = EEventTriggerState::Disabled;
 
+	// 이벤트 트리거 데이터 테이블(FEventTriggerDataRow) 고정 포인터 입니다.
+	// BeginPlay에서 한 번만 세팅되며, 이후 변경/해제되지 않습니다.
+	// 유효성은 BeginPlay의 checkf로 보장되므로 이후에는 null 체크 없이 바로 사용해도 안전합니다.
 	const FEventTriggerDataRow* m_pEventTriggerData = nullptr;
 };

@@ -31,11 +31,8 @@ public:
 	UFUNCTION( BlueprintCallable )
 	FORCEINLINE EEventTriggerState GetTriggerState() const { return R_eTriggerState; }
 
-	bool IsConditionOverlappingPlayer( const ACoopPuzzleCharacter* pPlayer ) const;
-
 protected:
 	virtual void GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const override;
-	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay( const EEndPlayReason::Type EndPlayReason ) override;
 
@@ -54,9 +51,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class UBoxComponent* TriggerVolume = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	class UBoxComponent* ConditionVolume = nullptr;
 
 private:
 	UFUNCTION()

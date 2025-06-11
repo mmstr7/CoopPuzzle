@@ -126,7 +126,7 @@ void ACoopPuzzleCharacter::OnKeyPressed_DE( EPlayerInputType ePlayerInputType ) 
 		if( IsValid( pTriggerManagerSubsystem ) == false )
 			return;
 
-		pTriggerManagerSubsystem->TriggerEvent( GetPlayerUID(), EEventTriggerMode::InputInteractKey );
+		pTriggerManagerSubsystem->TriggerManualEvent( GetPlayerUID(), EManualTriggerMode::InputInteractKey );
 	} break;
 	default:
 		break;

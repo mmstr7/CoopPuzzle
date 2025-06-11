@@ -13,16 +13,25 @@ struct FEventTriggerDataRow : public FTableRowBase
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "트리거 이름" ) )
+    FText TriggetName = FText();
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "개발자용 주석" ) )
     FString Comment = "";
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "기본 상태" ) )
-    EEventTriggerState DefaultState = EEventTriggerState::Enabled;
+	EEventTriggerState DefaultState = EEventTriggerState::Enabled;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 모드" ) )
-    EEventTriggerMode EventTriggerMode = EEventTriggerMode::None;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 조건 충족 시 자동 실행 여부" ) )
+    bool AutoTriggerOnCondition = true;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 조건" ) )
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "수동 실행 모드. 반드시 유저와 트리거가 연결된 상태에서 실행 가능.", EditCondition = "AutoTriggerOnCondition == false" ) )
+    EManualTriggerMode ManualTriggerMode = EManualTriggerMode::None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "조건 없이 실행 가능", EditCondition = "AutoTriggerOnCondition == false" ) )
+    bool Unconditional = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 조건", EditCondition = "Unconditional == false" ) )
     FEventTriggerConditionParams EventTriggerCondition;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 효과" ) )

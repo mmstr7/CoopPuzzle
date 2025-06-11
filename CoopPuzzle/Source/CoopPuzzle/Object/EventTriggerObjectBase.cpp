@@ -25,14 +25,6 @@ AEventTriggerObjectBase::AEventTriggerObjectBase()
 
 	TriggerVolume = CreateDefaultSubobject<UBoxComponent>( TEXT( "TriggerVolume" ) );
 	TriggerVolume->SetupAttachment( RootComponent );
-
-	ConditionVolume = CreateDefaultSubobject<UBoxComponent>( TEXT( "ConditionVolume" ) );
-	ConditionVolume->SetupAttachment( RootComponent );
-}
-
-bool AEventTriggerObjectBase::IsConditionOverlappingPlayer( const ACoopPuzzleCharacter* pPlayer ) const
-{
-	return IsValid( ConditionVolume ) == true && ConditionVolume->IsOverlappingActor( pPlayer ) == true;
 }
 
 void AEventTriggerObjectBase::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
@@ -40,17 +32,6 @@ void AEventTriggerObjectBase::GetLifetimeReplicatedProps( TArray<FLifetimeProper
 	Super::GetLifetimeReplicatedProps( OutLifetimeProps );
 
 	DOREPLIFETIME( AEventTriggerObjectBase, R_eTriggerState );
-}
-
-void AEventTriggerObjectBase::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-
-	if( IsNetMode( NM_DedicatedServer ) == true && IsValid( TriggerVolume ) == true )
-	{
-		TriggerVolume->OnComponentBeginOverlap.AddDynamic( this, &AEventTriggerObjectBase::OnTriggerVolumeBeginOverlap_DE );
-		TriggerVolume->OnComponentEndOverlap.AddDynamic( this, &AEventTriggerObjectBase::OnTriggerVolumeEndOverlap_DE );
-	}
 }
 
 void AEventTriggerObjectBase::BeginPlay()
@@ -66,6 +47,21 @@ void AEventTriggerObjectBase::BeginPlay()
 	m_pEventTriggerData = pDataTableSubsystem->GetDataRowOrNull<FEventTriggerDataRow>( EDataTableType::EventTrigger, EventTriggerID );
 	checkf( m_pEventTriggerData != nullptr, TEXT( "EventTriggerID [%s] is not valid. Please check EventDataTable or [%s] class detail." ), *EventTriggerID.ToString(), *FString( GetClass()->GetName() ) );
 
+	if( IsValid( TriggerVolume ) == true )
+	{
+		// DE이고 수동 트리거라면 오버랩 이벤트 켜기
+		bool bEnableOverlap = IsNetMode( NM_DedicatedServer ) == true && m_pEventTriggerData->AutoTriggerOnCondition == false;
+
+		TriggerVolume->SetGenerateOverlapEvents( bEnableOverlap );
+		if( bEnableOverlap == true )
+		{
+			TriggerVolume->OnComponentBeginOverlap.AddDynamic( this, &AEventTriggerObjectBase::OnTriggerVolumeBeginOverlap_DE );
+			TriggerVolume->OnComponentEndOverlap.AddDynamic( this, &AEventTriggerObjectBase::OnTriggerVolumeEndOverlap_DE );
+		}
+
+		//TODO : 델리게이트 해제 로직 추가
+	}
+
 	if( IsNetMode( NM_DedicatedServer ) == true )
 	{
 		SetTriggerState_DE( m_pEventTriggerData->DefaultState );
@@ -73,7 +69,7 @@ void AEventTriggerObjectBase::BeginPlay()
 		UEventTriggerManagerSubsystem* pEventTriggerSubsystem = GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>();
 		if( IsValid( pEventTriggerSubsystem ) == true )
 		{
-			pEventTriggerSubsystem->RegisterEventTriggerHandle( this, FOnEventTriggerCompleted::CreateUObject( this, &AEventTriggerObjectBase::OnTriggered_DE ) );
+			pEventTriggerSubsystem->RegisterEventTrigger( this, FOnEventTriggerCompleted::CreateUObject( this, &AEventTriggerObjectBase::OnTriggered_DE ) );
 		}
 
 		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = GetGameInstance()->GetSubsystem<UWorldActorManagerSubsystem>();
@@ -96,7 +92,7 @@ void AEventTriggerObjectBase::EndPlay( const EEndPlayReason::Type EndPlayReason 
 		UEventTriggerManagerSubsystem* pEventTriggerSubsystem = GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>();
 		if( IsValid( pEventTriggerSubsystem ) == true )
 		{
-			pEventTriggerSubsystem->UnregisterEventTriggerHandle( GetEventTriggerID() );
+			pEventTriggerSubsystem->UnregisterEventTrigger( GetEventTriggerID() );
 		}
 
 		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = GetGameInstance()->GetSubsystem<UWorldActorManagerSubsystem>();
@@ -109,7 +105,18 @@ void AEventTriggerObjectBase::EndPlay( const EEndPlayReason::Type EndPlayReason 
 
 void AEventTriggerObjectBase::OnRep_TriggerState_Implementation()
 {
-	if( IsNetMode( NM_DedicatedServer ) == false )
+	if( IsNetMode( NM_DedicatedServer ) == true )
+	{
+		if( R_eTriggerState == EEventTriggerState::Triggered )
+		{
+			UEventTriggerManagerSubsystem* pEventTriggerSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>() : nullptr;
+			if( IsValid( pEventTriggerSubsystem ) == true )
+			{
+				pEventTriggerSubsystem->TriggerAutoEvent( 0, EEventTriggerCondition::OtherTrigger_Triggered, EventTriggerID );
+			}
+		}
+	}
+	else
 	{
 		if( IsValid( EnableIndicator ) == true )
 		{
@@ -152,15 +159,23 @@ void AEventTriggerObjectBase::OnTriggered_DE( EEventTriggerResult eResult )
 	{
 	case EEventTriggerResult::Success:
 	{
+		if( m_pEventTriggerData->ManualTriggerMode == EManualTriggerMode::InTriggerVolume_Toggle )
+		{
+			SetTriggerState_DE( R_eTriggerState == EEventTriggerState::Triggered ? EEventTriggerState::Enabled : EEventTriggerState::Triggered );
+			break;
+		}
+
 		SetTriggerState_DE( EEventTriggerState::Triggered );
 	} break;
 	case EEventTriggerResult::Failed:
 	{
+		if( m_pEventTriggerData->ManualTriggerMode == EManualTriggerMode::InTriggerVolume_Stay )
+		{
+			SetTriggerState_DE( EEventTriggerState::Enabled );
+			break;
+		}
+
 		// 아무 일도 일어나지 않음
-	} break;
-	case EEventTriggerResult::Reset:
-	{
-		SetTriggerState_DE( m_pEventTriggerData->DefaultState );
 	} break;
 	default:
 	{

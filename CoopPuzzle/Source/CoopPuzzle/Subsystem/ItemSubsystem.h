@@ -36,8 +36,7 @@ public:
 	// 아이템 추가/삭제 공용. 변경 불가 시 내부 데이터 수정 없이 false 반환.
 	bool AddItems_DE( int64 iPlayerUID, const TMap<FName, int32>& mapItemInfos );
 
-	// DE에서는 PlayerState에, CL에서는 UItemSubsystem::UpdateItems에 바인딩합니다 (CL에서는 PlayerUID를 0으로 통일)
-	// (위젯 업데이트는 반드시 WidgetDelegateSubsystem을 통해 처리하세요.)
+	// 아이템 정보 동기화용 델리게이트 입니다. 위젯 업데이트는 반드시 WidgetDelegateSubsystem을 통해 처리하세요.
 	TMap<int64/*PlayerUID*/, FUpdateItemDelegate> OnUpdateInventoryItem;
 
 protected:

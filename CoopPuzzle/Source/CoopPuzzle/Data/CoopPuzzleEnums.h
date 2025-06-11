@@ -15,11 +15,12 @@ enum class EEventTriggerState : uint8
 UENUM(BlueprintType)
 enum class EManualTriggerMode : uint8
 {
-	None					UMETA( Hidden ),
-	InputInteractKey		UMETA( DisplayName = "InputInteractKey" ),
-	InTriggerVolume_Once	UMETA( DisplayName = "InTriggerVolume_Once" ),
-	InTriggerVolume_Stay	UMETA( DisplayName = "InTriggerVolume_Stay" ),
-	InTriggerVolume_Toggle	UMETA( DisplayName = "InTriggerVolume_Toggle" ),
+	None							UMETA( Hidden ),
+	InputInteractKey				UMETA( DisplayName = "InputInteractKey" ),
+	InTriggerVolume_Once			UMETA( DisplayName = "InTriggerVolume_Once" ),
+	InTriggerVolume_Stay			UMETA( DisplayName = "InTriggerVolume_Stay" ),
+	InTriggerVolume_Toggle			UMETA( DisplayName = "InTriggerVolume_Toggle" ),
+	InTriggerVolume_ConditionStay	UMETA( DisplayName = "InTriggerVolume_ConditionStay" ),
 };
 
 UENUM(BlueprintType)

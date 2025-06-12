@@ -63,3 +63,12 @@ enum class EDataTableType : uint8
 	LevelSequence			UMETA( DisplayName = "LevelSequence" ),
 	MAX						UMETA( Hidden ),
 };
+
+UENUM(BlueprintType)
+enum class EProcessState : uint8
+{
+	None					UMETA( Hidden ),
+	Playing					UMETA( DisplayName = "Playing" ),
+	Waiting					UMETA( DisplayName = "Waiting" ),
+	Finished				UMETA( DisplayName = "Finished" ),
+};

@@ -16,9 +16,11 @@ void UInventoryPanel::NativeConstruct()
 	if( IsValid( pWidgetDelegateSubsystem ) == true )
 	{
 		pWidgetDelegateSubsystem->OnPlayerInventoryUpdated_ToClient.FindOrAdd( 0 ).AddUObject( this, &UInventoryPanel::UpdateInventoryPanel );
+		pWidgetDelegateSubsystem->OnLevelSequenceStateChanged.AddUObject( this, &UInventoryPanel::LevelSequenceStateChanged );
 	}
 
 	UpdateInventoryPanel();
+	LevelSequenceStateChanged( EProcessState::Finished );
 }
 
 void UInventoryPanel::NativeDestruct()
@@ -29,6 +31,7 @@ void UInventoryPanel::NativeDestruct()
 	if( IsValid( pWidgetDelegateSubsystem ) == true )
 	{
 		pWidgetDelegateSubsystem->OnPlayerInventoryUpdated_ToClient.Remove( 0 );
+		pWidgetDelegateSubsystem->OnLevelSequenceStateChanged.RemoveAll( this );
 	}
 }
 
@@ -69,4 +72,9 @@ void UInventoryPanel::UpdateInventoryPanel()
 	{
 		ItemList->RemoveItem( ItemList->GetItemAt( ItemList->GetNumItems() - 1 ) );
 	}
+}
+
+void UInventoryPanel::LevelSequenceStateChanged( EProcessState eState )
+{
+	SetVisibility( eState == EProcessState::Finished ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed );
 }

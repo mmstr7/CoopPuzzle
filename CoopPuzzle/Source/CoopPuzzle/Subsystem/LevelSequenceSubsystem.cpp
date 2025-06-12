@@ -7,6 +7,8 @@
 #include "LevelSequencePlayer.h"
 #include "LevelSequenceActor.h"
 #include "CoopPuzzle/Game/CoopPuzzleGameInstance.h"
+#include "CoopPuzzle/Subsystem/WidgetDelegateSubsystem.h"
+#include "CoopPuzzle/Data/CoopPuzzleEnums.h"
 
 void ULevelSequenceSubsystem::PlayLevelSequence_DE( const FName& LevelSequenceID )
 {
@@ -31,6 +33,12 @@ void ULevelSequenceSubsystem::SkipLevelSequence_CL()
 		return;
 
     OnLevelSequenceFinished_ToServer.ExecuteIfBound( m_LevelSequencePlayState_CL.m_iPlayingLevelSequenceUID, pGameInstance->GetLocalPlayerUID_CL() );
+
+    UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>();
+    if( IsValid( pWidgetDelegateSubsystem ) == true )
+    {
+        pWidgetDelegateSubsystem->OnLevelSequenceStateChanged.Broadcast( EProcessState::Waiting );
+    }
 }
 
 void ULevelSequenceSubsystem::Initialize( FSubsystemCollectionBase& Collection )
@@ -126,6 +134,12 @@ void ULevelSequenceSubsystem::PlayLevelSequence( const FName& LevelSequenceID, i
 
         pLevelSequencePlayer->Play();
         pLevelSequencePlayer->OnFinished.AddDynamic( this, &ULevelSequenceSubsystem::OnLevelSequenceFinished_CL );
+
+        UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>();
+        if( IsValid( pWidgetDelegateSubsystem ) == true )
+        {
+            pWidgetDelegateSubsystem->OnLevelSequenceStateChanged.Broadcast( EProcessState::Playing );
+        }
     }
 }
 
@@ -163,6 +177,12 @@ void ULevelSequenceSubsystem::StopLevelSequence( int64 iLevelSequenceUID )
         }
 
         m_LevelSequencePlayState_CL.bIsPlaying = false;
+
+        UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>();
+        if( IsValid( pWidgetDelegateSubsystem ) == true )
+        {
+            pWidgetDelegateSubsystem->OnLevelSequenceStateChanged.Broadcast( EProcessState::Finished );
+        }
     }
 }
 

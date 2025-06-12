@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "CoopPuzzle/Data/CoopPuzzleEnums.h"
 #include "InventoryPanel.generated.h"
 
 class UTileView;
@@ -21,10 +22,13 @@ protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 	
+private:
 	UFUNCTION()
 	void UpdateInventoryPanel();
 
-private:
+	UFUNCTION()
+	void LevelSequenceStateChanged( EProcessState eState );
+
 	UPROPERTY( meta = (BindWidget))
 	UTileView* ItemList;
 

@@ -10,6 +10,7 @@ class UNotificationText;
 class UTextBlock;
 class UInventoryPanel;
 class UButton;
+class ULevelSequencePanel;
 
 /**
  * 
@@ -31,6 +32,9 @@ protected:
 
 	UPROPERTY( EditAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	UInventoryPanel* InventoryPanel;
+
+	UPROPERTY( EditAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	ULevelSequencePanel* LevelSequencePanel;
 
 private:
 	UFUNCTION()

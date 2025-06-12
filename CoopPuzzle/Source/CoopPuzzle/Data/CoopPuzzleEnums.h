@@ -37,6 +37,7 @@ enum class EEventTriggerSuccessEffect : uint8
 {
 	None					UMETA( Hidden ),
 	GainItem				UMETA( DisplayName = "GainItem" ),
+	PlayLevelSequence		UMETA( DisplayName = "PlayLevelSequence" ),
 };
 
 UENUM( BlueprintType )
@@ -59,5 +60,6 @@ enum class EDataTableType : uint8
 {
 	EventTrigger			UMETA( DisplayName = "EventTriggerDataTable" ),
 	Item					UMETA( DisplayName = "ItemDataTable" ),
+	LevelSequence			UMETA( DisplayName = "LevelSequence" ),
 	MAX						UMETA( Hidden ),
 };

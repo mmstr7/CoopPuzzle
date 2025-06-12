@@ -18,7 +18,7 @@ struct FEventTriggerHandle
 {
 public:
 	FEventTriggerHandle() {}
-	FEventTriggerHandle( AEventTriggerObjectBase* pTrigger, FOnEventTriggerCompleted CompletedDelegate )
+	FEventTriggerHandle( TWeakObjectPtr<AEventTriggerObjectBase> pTrigger, const FOnEventTriggerCompleted& CompletedDelegate )
 		: EventTrigger( pTrigger ), OnCompletedDelegate( CompletedDelegate ) {}
 
 	TWeakObjectPtr<AEventTriggerObjectBase> EventTrigger;
@@ -39,7 +39,7 @@ public:
 	void TriggerManualEvent( const int64& iPlayerUID, EManualTriggerMode eEventTriggerMode );
 	void TriggerAutoEvent( const int64& iPlayerUID, EEventTriggerCondition eConditionType, const FName& ConditionKey );
 
-	void RegisterEventTrigger( AEventTriggerObjectBase* pEventTrigger, FOnEventTriggerCompleted OnCompletedCallback );
+	void RegisterEventTrigger( AEventTriggerObjectBase* pEventTrigger, const FOnEventTriggerCompleted& OnCompletedCallback );
 	void UnregisterEventTrigger( const FName& EventTriggerID );
 
 	void LinkPlayerToEventTrigger( const int64& iPlayerUID, const FName& EventTriggerID );

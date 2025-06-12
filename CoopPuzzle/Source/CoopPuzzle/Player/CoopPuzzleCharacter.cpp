@@ -11,6 +11,7 @@
 #include "CoopPuzzle/Game/CoopPuzzleGameInstance.h"
 #include "CoopPuzzle/Subsystem/WorldActorManagerSubsystem.h"
 #include "CoopPuzzle/Player/CoopPuzzlePlayerState.h"
+#include "Net/UnrealNetwork.h"
 
 ACoopPuzzleCharacter::ACoopPuzzleCharacter()
 {
@@ -40,17 +41,24 @@ ACoopPuzzleCharacter::ACoopPuzzleCharacter()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 }
 
+void ACoopPuzzleCharacter::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
+{
+	Super::GetLifetimeReplicatedProps( OutLifetimeProps );
+
+	DOREPLIFETIME( ACoopPuzzleCharacter, R_iPlayerUID );
+}
+
 void ACoopPuzzleCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
 	if( GetNetMode() == NM_DedicatedServer )
 	{
-		UCoopPuzzleGameInstance* pGameInstance = static_cast< UCoopPuzzleGameInstance* >( GetGameInstance() );
+		UCoopPuzzleGameInstance* pGameInstance = Cast<UCoopPuzzleGameInstance>( GetGameInstance() );
 		if( IsValid( pGameInstance ) == false )
 			return;
 
-		m_iPlayerUID = pGameInstance->GenerateUID_DE();
+		R_iPlayerUID = pGameInstance->GenerateUID_DE();
 
 		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = pGameInstance->GetSubsystem<UWorldActorManagerSubsystem>();
 		if( IsValid( pWorldActorManagerSubsystem ) == true )
@@ -93,7 +101,7 @@ void ACoopPuzzleCharacter::PossessedBy( AController* NewController )
 	ACoopPuzzlePlayerState* pPlayerState = static_cast< ACoopPuzzlePlayerState* >( GetPlayerState() );
 	if( IsValid( pPlayerState ) == true )
 	{
-		pPlayerState->OnPossessed( GetPlayerUID() );
+		pPlayerState->BindEventDelegates_DE( GetPlayerUID() );
 	}
 }
 
@@ -110,7 +118,7 @@ void ACoopPuzzleCharacter::UnPossessed()
 	ACoopPuzzlePlayerState* pPlayerState = static_cast< ACoopPuzzlePlayerState* >( GetPlayerState() );
 	if( IsValid( pPlayerState ) == true )
 	{
-		pPlayerState->OnUnpossessed( GetPlayerUID() );
+		pPlayerState->UnbindEventDelegates_DE( GetPlayerUID() );
 	}
 }
 

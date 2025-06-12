@@ -4,16 +4,21 @@
 #include "CoopPuzzle/Widget/CoopPuzzleMainHUD.h"
 #include "CoopPuzzle/Subsystem/WidgetDelegateSubsystem.h"
 #include "CoopPuzzle/Widget/NotificationText.h"
+#include "CoopPuzzle/Subsystem/LevelSequenceSubsystem.h"
+#include "Components/Button.h"
 
 void UCoopPuzzleMainHUD::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
+	if( IsValid( GetGameInstance() ) == false )
+		return;
+
+	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>();
 	if( IsValid( pWidgetDelegateSubsystem ) == true )
 	{
-		pWidgetDelegateSubsystem->OnShowGlobalNotification.AddUObject( this, &UCoopPuzzleMainHUD::ShowGlobalNotification );
-		pWidgetDelegateSubsystem->OnShowLocalNotification.FindOrAdd( 0 ).AddUObject( this, &UCoopPuzzleMainHUD::ShowLocalNotification );
+		pWidgetDelegateSubsystem->OnShowGlobalNotification_ToClient.AddUObject( this, &UCoopPuzzleMainHUD::ShowGlobalNotification );
+		pWidgetDelegateSubsystem->OnShowLocalNotification_ToClient.FindOrAdd( 0 ).AddUObject( this, &UCoopPuzzleMainHUD::ShowLocalNotification );
 	}
 }
 
@@ -21,11 +26,14 @@ void UCoopPuzzleMainHUD::NativeDestruct()
 {
 	Super::NativeDestruct();
 
-	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
+	if( IsValid( GetGameInstance() ) == false )
+		return;
+
+	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>();
 	if( IsValid( pWidgetDelegateSubsystem ) == true )
 	{
-		pWidgetDelegateSubsystem->OnShowGlobalNotification.RemoveAll( this );
-		pWidgetDelegateSubsystem->OnShowLocalNotification.Remove( 0 );
+		pWidgetDelegateSubsystem->OnShowGlobalNotification_ToClient.RemoveAll( this );
+		pWidgetDelegateSubsystem->OnShowLocalNotification_ToClient.Remove( 0 );
 	}
 }
 

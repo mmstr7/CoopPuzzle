@@ -37,7 +37,7 @@ public:
 	bool AddItems_DE( int64 iPlayerUID, const TMap<FName, int32>& mapItemInfos );
 
 	// 아이템 정보 동기화용 델리게이트 입니다. 위젯 업데이트는 반드시 WidgetDelegateSubsystem을 통해 처리하세요.
-	TMap<int64/*PlayerUID*/, FUpdateItemDelegate> OnUpdateInventoryItem;
+	TMap<int64/*PlayerUID*/, FUpdateItemDelegate> OnUpdateInventoryItem_ToClient;
 
 protected:
 	virtual void Initialize( FSubsystemCollectionBase& Collection ) override;
@@ -55,7 +55,6 @@ private:
 	TMap<FName/*ItemID*/, TSet<int64/*ItemUID*/>> m_mapGeneratedItemUIDs;
 	TMap<int64/*ItemUID*/, TPair<FName/*ItemID*/, int32/*Count*/>> m_mapGeneratedItemInfos;
 
-	// 최초 아이템 업데이트 시점에 LoadItemDataIfNotLoaded() 함수가 호출되어, 
-	// 아이템 데이터 테이블 전체를 1회만 로드&캐싱합니다. (Lazy Loading)
+	// 최초 아이템 업데이트 시점에 데이터 테이블 전체를 1회만 로드&캐싱합니다. (Lazy Loading)
 	TMap<FName, FItemDataRow*> m_mapCachedItemData;
 };

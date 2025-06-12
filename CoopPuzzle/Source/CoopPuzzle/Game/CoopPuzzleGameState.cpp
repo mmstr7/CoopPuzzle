@@ -13,9 +13,9 @@ void ACoopPuzzleGameState::BeginPlay()
 	{
 		// WidgetDelegateSubsystem 헬퍼 함수 바인딩
 		UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
-		if( IsValid( pWidgetDelegateSubsystem ) == true && pWidgetDelegateSubsystem->OnShowGlobalNotification.IsBoundToObject( this ) == false )
+		if( IsValid( pWidgetDelegateSubsystem ) == true && pWidgetDelegateSubsystem->OnShowGlobalNotification_ToClient.IsBoundToObject( this ) == false )
 		{
-			pWidgetDelegateSubsystem->OnShowGlobalNotification.AddUObject( this, &ACoopPuzzleGameState::MULTI_OnShowGlobalNotification );
+			pWidgetDelegateSubsystem->OnShowGlobalNotification_ToClient.AddUObject( this, &ACoopPuzzleGameState::MULTI_OnShowGlobalNotification );
 		}
 	}
 	else
@@ -37,7 +37,7 @@ void ACoopPuzzleGameState::EndPlay( const EEndPlayReason::Type EndPlayReason )
 		UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
 		if( IsValid( pWidgetDelegateSubsystem ) == true )
 		{
-			pWidgetDelegateSubsystem->OnShowGlobalNotification.RemoveAll( this );
+			pWidgetDelegateSubsystem->OnShowGlobalNotification_ToClient.RemoveAll( this );
 		}
 	}
 }
@@ -52,6 +52,6 @@ void ACoopPuzzleGameState::MULTI_OnShowGlobalNotification_Implementation( const 
 	if( IsValid( pWidgetDelegateSubsystem ) == false )
 		return;
 
-	pWidgetDelegateSubsystem->OnShowGlobalNotification.Broadcast( Message );
+	pWidgetDelegateSubsystem->OnShowGlobalNotification_ToClient.Broadcast( Message );
 }
 #pragma endregion

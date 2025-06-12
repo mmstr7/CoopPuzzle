@@ -69,7 +69,7 @@ bool UItemSubsystem::HasItems( int64 iPlayerUID, const TMap<FName, int32>& mapIt
 
 bool UItemSubsystem::AddItems_DE( int64 iPlayerUID, const TMap<FName, int32>& mapItemInfos )
 {
-    UCoopPuzzleGameInstance* pGameInstance = static_cast< UCoopPuzzleGameInstance* >( GetGameInstance() );
+    UCoopPuzzleGameInstance* pGameInstance = Cast<UCoopPuzzleGameInstance>( GetGameInstance() );
     checkf( IsValid( pGameInstance ) == true, TEXT( "pGameInstance is not valid." ) );
 
     TArray<FItemSyncInfo> arrUpdateItemInfos;
@@ -120,7 +120,7 @@ void UItemSubsystem::Initialize( FSubsystemCollectionBase& Collection )
 
     if( GetGameInstance()->IsDedicatedServerInstance() == false )
     {
-        OnUpdateInventoryItem.FindOrAdd( 0 ).BindLambda( [this]( const TArray<FItemSyncInfo>& arrUpdateItemInfos )
+        OnUpdateInventoryItem_ToClient.FindOrAdd( 0 ).BindLambda( [this]( const TArray<FItemSyncInfo>& arrUpdateItemInfos )
         {
             UpdateItems( 0, arrUpdateItemInfos );
         } );
@@ -157,14 +157,14 @@ void UItemSubsystem::UpdateItems( int64 iPlayerUID, const TArray<FItemSyncInfo>&
 
     if( GetGameInstance()->IsDedicatedServerInstance() == true )
     {
-        OnUpdateInventoryItem.FindOrAdd( iPlayerUID ).ExecuteIfBound( arrUpdateItemInfos );
+        OnUpdateInventoryItem_ToClient.FindOrAdd( iPlayerUID ).ExecuteIfBound( arrUpdateItemInfos );
     }
     else
     {
         UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>();
         if( IsValid( pWidgetDelegateSubsystem ) == true )
         {
-            pWidgetDelegateSubsystem->OnPlayerInventoryUpdated.FindOrAdd( 0 ).Broadcast();
+            pWidgetDelegateSubsystem->OnPlayerInventoryUpdated_ToClient.FindOrAdd( 0 ).Broadcast();
         }
     }
 }

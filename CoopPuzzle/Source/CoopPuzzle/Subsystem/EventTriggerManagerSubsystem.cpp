@@ -9,6 +9,7 @@
 #include "CoopPuzzle/Subsystem/WidgetDelegateSubsystem.h"
 #include "CoopPuzzle/Subsystem/WorldActorManagerSubsystem.h"
 #include "CoopPuzzle/Subsystem/ItemSubsystem.h"
+#include "CoopPuzzle/Subsystem/LevelSequenceSubsystem.h"
 
 DEFINE_LOG_CATEGORY( LogEventTriggerManagerSubsystem );
 
@@ -45,7 +46,7 @@ void UEventTriggerManagerSubsystem::TriggerAutoEvent( const int64& iPlayerUID, E
     }
 }
 
-void UEventTriggerManagerSubsystem::RegisterEventTrigger( AEventTriggerObjectBase* pEventTrigger, FOnEventTriggerCompleted OnCompletedCallback )
+void UEventTriggerManagerSubsystem::RegisterEventTrigger( AEventTriggerObjectBase* pEventTrigger, const FOnEventTriggerCompleted& OnCompletedCallback )
 {
     checkf( IsValid( pEventTrigger ) == true, TEXT( "pEventTrigger is not valid." ) );
 
@@ -256,6 +257,20 @@ EEventTriggerResult UEventTriggerManagerSubsystem::TriggerEvent( const int64& iP
             bool bAddSuccess = pItemSubsystem->AddItems_DE( iPlayerUID, pEventTriggerData->EventTriggerSuccessEffect.Params );
             checkf( bAddSuccess == true, TEXT( "GainItem Failed!" ) );
         } break;
+        case EEventTriggerSuccessEffect::PlayLevelSequence:
+        {
+            ULevelSequenceSubsystem* pLevelSequenceSubsystem = GetGameInstance()->GetSubsystem<ULevelSequenceSubsystem>();
+            if( IsValid( pLevelSequenceSubsystem ) == false )
+                break;
+
+            // 한 번만 실행
+            for( const TPair<FName, int32>& pairLevelSequenceID : pEventTriggerData->EventTriggerSuccessEffect.Params )
+            {
+                pLevelSequenceSubsystem->PlayLevelSequence_DE( pairLevelSequenceID.Key );
+                break;
+            }
+
+        } break;
         default:
         {
             // checkf 출력 필요
@@ -268,10 +283,10 @@ EEventTriggerResult UEventTriggerManagerSubsystem::TriggerEvent( const int64& iP
     if( IsValid( pWidgetDelegateSubsystem ) == true )
     {
         if( const FText* pGlobalNotification = pEventTriggerData->GlobalNotifications.Find( eResult ) )
-            pWidgetDelegateSubsystem->OnShowGlobalNotification.Broadcast( *pGlobalNotification );
+            pWidgetDelegateSubsystem->OnShowGlobalNotification_ToClient.Broadcast( *pGlobalNotification );
 
         if( const FText* pLocalNotification = pEventTriggerData->LocalNotifications.Find( eResult ) )
-            pWidgetDelegateSubsystem->OnShowLocalNotification.FindOrAdd( iPlayerUID ).Broadcast( *pLocalNotification );
+            pWidgetDelegateSubsystem->OnShowLocalNotification_ToClient.FindOrAdd( iPlayerUID ).Broadcast( *pLocalNotification );
     }
 
     pEventTriggerHandle->OnCompletedDelegate.ExecuteIfBound( eResult );

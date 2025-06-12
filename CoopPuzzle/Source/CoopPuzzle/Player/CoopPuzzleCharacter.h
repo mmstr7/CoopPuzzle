@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "CoopPuzzle/Data/CoopPuzzleEnums.h"
+#include "CoopPuzzle/Data/CoopPuzzleConstants.h"
 #include "CoopPuzzleCharacter.generated.h"
 
 class AEventTriggerObjectBase;
@@ -18,9 +19,10 @@ class ACoopPuzzleCharacter : public ACharacter
 public:
 	ACoopPuzzleCharacter();
 
-	const int64& GetPlayerUID() const { return m_iPlayerUID; }
+	const int64& GetPlayerUID() const { return R_iPlayerUID; }
 
 protected:
+	virtual void GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay( const EEndPlayReason::Type EndPlayReason ) override;
 	virtual void PossessedBy( AController* NewController ) override;
@@ -42,6 +44,7 @@ private:
 	UPROPERTY()
 	AEventTriggerObjectBase* m_pInteractableEventTrigger = nullptr;
 
-	int64 m_iPlayerUID = -1;
+	UPROPERTY(Replicated)
+	int64 R_iPlayerUID = INVALID_PLAYER_UID;
 };
 

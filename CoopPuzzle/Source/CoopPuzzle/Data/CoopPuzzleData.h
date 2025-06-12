@@ -6,6 +6,7 @@
 #include "Engine/DataTable.h"
 #include "CoopPuzzle/Data/CoopPuzzleEnums.h"
 #include "CoopPuzzle/Data/CoopPuzzleStructs.h"
+#include "Runtime/LevelSequence/Public/LevelSequence.h"
 #include "CoopPuzzleData.generated.h"
 
 USTRUCT(BlueprintType)
@@ -59,14 +60,14 @@ struct FItemDataRow : public FTableRowBase
     UTexture2D* ItemIcon = nullptr;
 };
 
-USTRUCT(BlueprintType)
+USTRUCT( BlueprintType )
 struct FLevelSequenceDataRow : public FTableRowBase
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FText ItemName = FText();
+	UPROPERTY( EditAnywhere, BlueprintReadOnly )
+	FString Comment = "";
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FString Comment = "";
+	UPROPERTY( EditAnywhere, BlueprintReadOnly )
+	ULevelSequence* LevelSequence = nullptr;
 };

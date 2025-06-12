@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "CoopPuzzle/Data/CoopPuzzleEnums.h"
+#include "CoopPuzzle/Data/CoopPuzzleConstants.h"
 #include "CoopPuzzleStructs.generated.h"
 
+class ULevelSequencePlayer;
 
 USTRUCT( BlueprintType )
 struct FEventTriggerConditionParams

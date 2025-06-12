@@ -15,7 +15,7 @@ void UInventoryPanel::NativeConstruct()
 	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
 	if( IsValid( pWidgetDelegateSubsystem ) == true )
 	{
-		pWidgetDelegateSubsystem->OnPlayerInventoryUpdated.FindOrAdd( 0 ).AddUObject( this, &UInventoryPanel::UpdateInventoryPanel );
+		pWidgetDelegateSubsystem->OnPlayerInventoryUpdated_ToClient.FindOrAdd( 0 ).AddUObject( this, &UInventoryPanel::UpdateInventoryPanel );
 	}
 
 	UpdateInventoryPanel();
@@ -28,7 +28,7 @@ void UInventoryPanel::NativeDestruct()
 	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
 	if( IsValid( pWidgetDelegateSubsystem ) == true )
 	{
-		pWidgetDelegateSubsystem->OnPlayerInventoryUpdated.Remove( 0 );
+		pWidgetDelegateSubsystem->OnPlayerInventoryUpdated_ToClient.Remove( 0 );
 	}
 }
 

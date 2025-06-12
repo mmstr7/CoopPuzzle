@@ -9,6 +9,7 @@
 class UNotificationText;
 class UTextBlock;
 class UInventoryPanel;
+class UButton;
 
 /**
  * 

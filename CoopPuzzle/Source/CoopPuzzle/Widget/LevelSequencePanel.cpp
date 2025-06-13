@@ -22,6 +22,8 @@ void ULevelSequencePanel::NativeConstruct()
 	{
 		SkipBtn->OnPressed.AddUniqueDynamic( this, &ULevelSequencePanel::OnPressedSkipBtn );
 	}
+
+	UpdateCurrentState( EProcessState::Finished );
 }
 
 void ULevelSequencePanel::NativeDestruct()

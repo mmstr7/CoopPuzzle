@@ -50,7 +50,13 @@ protected:
 	class UStaticMeshComponent* EnableIndicator = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	class UBoxComponent* TriggerVolume = nullptr;
+	class UBoxComponent* TriggerVolume_DE = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	class UBoxComponent* HintTextVolume_CL = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	class UWidgetComponent* HintTextWidget = nullptr;
 
 private:
 	UFUNCTION()
@@ -60,10 +66,20 @@ private:
 	void OnTriggerVolumeEndOverlap_DE( class UPrimitiveComponent* pOverlappedComp, AActor* pOtherActor, UPrimitiveComponent* pOtherComp, int32 iOtherBodyIndex );
 
 	UFUNCTION()
+	void OnIndicatorTextVolumeBeginOverlap_CL( class UPrimitiveComponent* pOverlappedComp, class AActor* pOtherActor, class UPrimitiveComponent* pOtherComp, int32 iOtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult );
+
+	UFUNCTION()
+	void OnIndicatorTextVolumeEndOverlap_CL( class UPrimitiveComponent* pOverlappedComp, AActor* pOtherActor, UPrimitiveComponent* pOtherComp, int32 iOtherBodyIndex );
+
+	UFUNCTION()
 	void OnTriggered_DE( EEventTriggerResult eResult );
 
 	UFUNCTION()
 	void SetTriggerState_DE( EEventTriggerState eTriggerState );
+
+	void UpdateHintTextWidget();
+
+	bool m_bIHintTextVolumeOverlapped_CL = false;
 
 	// 반드시 SetTriggerState_DE()를 통해서만 R_eTriggerState를 변경할 것!
 	UPROPERTY( ReplicatedUsing=OnRep_TriggerState )

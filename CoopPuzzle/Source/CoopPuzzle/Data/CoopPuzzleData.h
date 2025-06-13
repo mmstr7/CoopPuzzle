@@ -38,6 +38,9 @@ struct FEventTriggerDataRow : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "이벤트 실행 효과" ) )
     FEventTriggerSuccessEffectParams EventTriggerSuccessEffect;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "힌트 범위에 들어왔을 때 출력할 텍스트" ) )
+    FText HintText = FText();
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = ( ToolTip = "결과에 따른 전체 알림 텍스트" ) )
     TMap<EEventTriggerResult, FText> GlobalNotifications;
 

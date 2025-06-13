@@ -6,6 +6,8 @@
 #include "Engine/GameInstance.h"
 #include "CoopPuzzleGameInstance.generated.h"
 
+class ACoopPuzzleCharacter;
+
 /**
  * 
  */
@@ -19,6 +21,8 @@ public:
 
 	// DE의 ACoopPuzzleCharacter::BeginPlay() 시점에 세팅됨. CL에선 값 동기화 이후 유효.
 	int64 GetLocalPlayerUID_CL();
+
+	bool IsLocalPlayer_CL( const ACoopPuzzleCharacter* pPlayer );
 
 private:
 	int64 m_iNextUID_DE = 0;

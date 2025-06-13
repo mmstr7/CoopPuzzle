@@ -27,3 +27,10 @@ int64 UCoopPuzzleGameInstance::GetLocalPlayerUID_CL()
 
 	return pLocalPlayer->GetPlayerUID();
 }
+
+bool UCoopPuzzleGameInstance::IsLocalPlayer_CL( const ACoopPuzzleCharacter* pPlayer )
+{
+	checkf( IsDedicatedServerInstance() == false, TEXT( "CL Only." ) );
+
+	return IsValid( pPlayer ) == true && pPlayer->GetPlayerUID() == GetLocalPlayerUID_CL();
+}

@@ -7,22 +7,21 @@
 #include "CoopPuzzle/Player/CoopPuzzleCharacter.h"
 #include "CoopPuzzle/Object/EventTriggerObjectBase.h"
 #include "CoopPuzzle/Subsystem/WidgetDelegateSubsystem.h"
-#include "CoopPuzzle/Subsystem/WorldActorManagerSubsystem.h"
 #include "CoopPuzzle/Subsystem/ItemSubsystem.h"
 #include "CoopPuzzle/Subsystem/LevelSequenceSubsystem.h"
 
 DEFINE_LOG_CATEGORY( LogEventTriggerManagerSubsystem );
 
-void UEventTriggerManagerSubsystem::TriggerManualEvent( const int64& iPlayerUID, EManualTriggerMode eEventTriggerMode )
+void UEventTriggerManagerSubsystem::TriggerManualEvent( int64 iPlayerUID, EManualTriggerMode eEventTriggerMode )
 {
-    const FName* pEventTriggerID = mapLinkedPlayerToEventTrigger.Find( iPlayerUID );
-    if( pEventTriggerID == nullptr )
+    const int64* pEventTriggerUID = mapLinkedPlayerToEventTrigger.Find( iPlayerUID );
+    if( pEventTriggerUID == nullptr )
         return;
 
-    TriggerEvent( iPlayerUID, *pEventTriggerID, true, eEventTriggerMode );
+    TriggerEvent( iPlayerUID, *pEventTriggerUID, true, eEventTriggerMode );
 }
 
-void UEventTriggerManagerSubsystem::TriggerAutoEvent( const int64& iPlayerUID, EEventTriggerCondition eConditionType, const FName& ConditionKey )
+void UEventTriggerManagerSubsystem::TriggerAutoEvent( int64 iPlayerUID, EEventTriggerCondition eConditionType, const FName& ConditionKey )
 {
     TMap<FName, FEventTriggerConditionParams>* pTriggerConditions = mapCachedAutoTriggerConditions.Find( eConditionType );
     if( pTriggerConditions == nullptr || pTriggerConditions->Num() <= 0 )
@@ -31,13 +30,33 @@ void UEventTriggerManagerSubsystem::TriggerAutoEvent( const int64& iPlayerUID, E
     TArray<FName> arrSuccessTriggerIDs;
     for( const auto& TriggerCondition : *pTriggerConditions )
     {
-        if( TriggerCondition.Value.Params.Contains( ConditionKey ) == false )
+        const FName& TriggerID = TriggerCondition.Key;
+        const TMap<FName, int32>& mapConditions = TriggerCondition.Value.Params;
+
+        if( mapConditions.Contains( ConditionKey ) == false )
             continue;
 
-        if( TriggerEvent( iPlayerUID, TriggerCondition.Key, false ) != EEventTriggerResult::Success )
+        // 해당 ID의 트리거가 하나도 없다면 continue
+        const TSet<int64>* setTriggerUIDs = mapEventTriggerUIDs.Find( TriggerID );
+        if( setTriggerUIDs == nullptr || setTriggerUIDs->IsEmpty() == true )
             continue;
 
-        arrSuccessTriggerIDs.Add( TriggerCondition.Key );
+        bool bForceComplete = false;
+        for( int64 iTriggerUID : *setTriggerUIDs )
+        {
+            if( bForceComplete == false )
+            {
+                if( TriggerEvent( iPlayerUID, iTriggerUID, false ) != EEventTriggerResult::Success )
+                    break;
+
+                bForceComplete = true;
+                arrSuccessTriggerIDs.Add( TriggerCondition.Key );
+                continue;
+            }
+
+            // 동일 ID 트리거 강제 Success 처리
+            mapCachedTriggerHandle.FindRef( iTriggerUID ).OnCompletedDelegate.ExecuteIfBound( EEventTriggerResult::Success );
+        }
     }
 
     for( const FName& SuccessTriggerID : arrSuccessTriggerIDs )
@@ -50,45 +69,49 @@ void UEventTriggerManagerSubsystem::RegisterEventTrigger( AEventTriggerObjectBas
 {
     checkf( IsValid( pEventTrigger ) == true, TEXT( "pEventTrigger is not valid." ) );
 
-    mapCachedTriggerHandle.Add( pEventTrigger->GetEventTriggerID(), FEventTriggerHandle( pEventTrigger, OnCompletedCallback ) );
+    mapCachedTriggerHandle.Add( pEventTrigger->GetEventTriggerUID_DE(), FEventTriggerHandle( pEventTrigger, OnCompletedCallback ) );
+
+    mapEventTriggerIDs.Add( pEventTrigger->GetEventTriggerUID_DE(), pEventTrigger->GetEventTriggerID() );
+    mapEventTriggerUIDs.FindOrAdd( pEventTrigger->GetEventTriggerID() ).Add( pEventTrigger->GetEventTriggerUID_DE() );
 
     // 조건 충족 시 즉시 실행해야 하는 트리거 정보 캐싱
     if( pEventTrigger->GetTriggerData()->AutoTriggerOnCondition == true )
     {
         const FEventTriggerConditionParams& TriggerCondition = pEventTrigger->GetTriggerData()->EventTriggerCondition;
-        mapCachedAutoTriggerConditions.FindOrAdd( TriggerCondition.ConditionType).Add( pEventTrigger->GetEventTriggerID(), TriggerCondition );
+        mapCachedAutoTriggerConditions.FindOrAdd( TriggerCondition.ConditionType ).Add( pEventTrigger->GetEventTriggerID(), TriggerCondition );
     }
 }
 
-void UEventTriggerManagerSubsystem::UnregisterEventTrigger( const FName& EventTriggerID )
+void UEventTriggerManagerSubsystem::UnregisterEventTrigger( int64 iEventTriggerUID )
 {
-    mapCachedTriggerHandle.Remove( EventTriggerID );
+    mapEventTriggerUIDs.FindOrAdd( mapEventTriggerIDs.FindRef( iEventTriggerUID ) ).Remove( iEventTriggerUID );
+	mapEventTriggerIDs.Remove( iEventTriggerUID );
 
     // 트리거 연결 정보 정리
-    for( int64 iPlayerUID : mapLinkedEventTriggerToPlayer.FindRef( EventTriggerID ) )
+    for( int64 iPlayerUID : mapLinkedEventTriggerToPlayer.FindRef( iEventTriggerUID ) )
     {
         mapLinkedPlayerToEventTrigger.Remove( iPlayerUID );
     }
-    mapLinkedEventTriggerToPlayer.Remove( EventTriggerID );
+    mapLinkedEventTriggerToPlayer.Remove( iEventTriggerUID );
 }
 
-void UEventTriggerManagerSubsystem::LinkPlayerToEventTrigger( const int64& iPlayerUID, const FName& EventTriggerID )
+void UEventTriggerManagerSubsystem::LinkPlayerToEventTrigger( int64 iPlayerUID, int64 EventTriggerUID )
 {
     // 이미 링크 등록되었다면 동작하지 않음
-    if( const FName* pOldEventTriggerID = mapLinkedPlayerToEventTrigger.Find( iPlayerUID ) )
+    if( const int64* pOldEventTriggerUID = mapLinkedPlayerToEventTrigger.Find( iPlayerUID ) )
     {
-        if( *pOldEventTriggerID == EventTriggerID )
+        if( *pOldEventTriggerUID == EventTriggerUID )
             return;
 
-        UnlinkPlayerToEventTrigger( iPlayerUID, *pOldEventTriggerID );
+        UnlinkPlayerToEventTrigger( iPlayerUID, *pOldEventTriggerUID );
     }
 
     // 플레이어 <-> 트리거 연결 정보 갱신
-    mapLinkedPlayerToEventTrigger.Add( iPlayerUID, EventTriggerID );
-    mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerID ).Add( iPlayerUID );
+    mapLinkedPlayerToEventTrigger.Add( iPlayerUID, EventTriggerUID );
+    mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerUID ).Add( iPlayerUID );
 
     // 연결과 함께 이벤트 실행해야 하는 모드일 경우
-    const FEventTriggerHandle* pEventTriggerHandle = mapCachedTriggerHandle.Find( EventTriggerID );
+    const FEventTriggerHandle* pEventTriggerHandle = mapCachedTriggerHandle.Find( EventTriggerUID );
     if( pEventTriggerHandle != nullptr && pEventTriggerHandle->EventTrigger.IsValid() == true )
     {
         const FEventTriggerDataRow* pEventTriggerData = pEventTriggerHandle->EventTrigger.Get()->GetTriggerData();
@@ -104,24 +127,24 @@ void UEventTriggerManagerSubsystem::LinkPlayerToEventTrigger( const int64& iPlay
     }
 }
 
-void UEventTriggerManagerSubsystem::UnlinkPlayerToEventTrigger( const int64& iPlayerUID, const FName& EventTriggerID )
+void UEventTriggerManagerSubsystem::UnlinkPlayerToEventTrigger( int64 iPlayerUID, int64 EventTriggerUID )
 {
     // 이미 링크 해제되었다면 동작하지 않음
-    if( mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerID ).Contains( iPlayerUID ) == false )
+    if( mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerUID ).Contains( iPlayerUID ) == false )
         return;
 
     // 플레이어 <-> 트리거 연결 정보 갱신
-	const FName* pEventTriggerID = mapLinkedPlayerToEventTrigger.Find( iPlayerUID );
-    if( pEventTriggerID == nullptr || *pEventTriggerID != EventTriggerID )
+	const int64* pEventTriggerUID = mapLinkedPlayerToEventTrigger.Find( iPlayerUID );
+    if( pEventTriggerUID == nullptr || *pEventTriggerUID != EventTriggerUID )
         return;
 
 	mapLinkedPlayerToEventTrigger.Remove( iPlayerUID );
-	mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerID ).Remove( iPlayerUID );
+	mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerUID ).Remove( iPlayerUID );
 
 	//트리거에 연결된 유저가 아무도 없을 때 초기화 해야 하는 모드일 경우
-	if( mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerID ).Num() <= 0 )
+	if( mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerUID ).Num() <= 0 )
 	{
-		const FEventTriggerHandle* pEventTriggerHandle = mapCachedTriggerHandle.Find( EventTriggerID );
+		const FEventTriggerHandle* pEventTriggerHandle = mapCachedTriggerHandle.Find( EventTriggerUID );
 		if( pEventTriggerHandle == nullptr || pEventTriggerHandle->EventTrigger.IsValid() == false )
 			return;
 
@@ -139,9 +162,11 @@ bool UEventTriggerManagerSubsystem::ShouldCreateSubsystem( UObject* Outer ) cons
     return IsValid( pGameInstance ) == true && pGameInstance->IsDedicatedServerInstance() == true;
 }
 
-EEventTriggerResult UEventTriggerManagerSubsystem::TriggerEvent( const int64& iPlayerUID, const FName& EventTriggerID, bool bIsManualTriggerd, EManualTriggerMode eEventTriggerMode )
+EEventTriggerResult UEventTriggerManagerSubsystem::TriggerEvent( int64 iPlayerUID, int64 EventTriggerUID, bool bIsManualTriggerd, EManualTriggerMode eEventTriggerMode )
 {
-    const FEventTriggerHandle* pEventTriggerHandle = mapCachedTriggerHandle.Find( EventTriggerID );
+    UE_LOG( LogTemp, Error, TEXT( "EventTriggerUID: %d" ), EventTriggerUID );
+
+    const FEventTriggerHandle* pEventTriggerHandle = mapCachedTriggerHandle.Find( EventTriggerUID );
     if( pEventTriggerHandle == nullptr )
         return EEventTriggerResult::Failed;
 
@@ -203,26 +228,45 @@ EEventTriggerResult UEventTriggerManagerSubsystem::TriggerEvent( const int64& iP
         } break;
         case EEventTriggerCondition::OtherTrigger_Triggered:
         {
-            TSet<FName> setTriggerIDs;
-            pEventTriggerData->EventTriggerCondition.Params.GetKeys( setTriggerIDs );
-            if( setTriggerIDs.Num() <= 0 )
+            const TMap<FName, int32>& mapTriggerCount = pEventTriggerData->EventTriggerCondition.Params;
+            if( mapTriggerCount.IsEmpty() == true )
                 break;
 
-            int32 iTriggeredCount = 0;
-            for( const FName& TriggerID : setTriggerIDs )
+            int32 iRemainingTriggerCount = mapTriggerCount.Num();
+            for( const TPair<FName, int32>& TriggerID : mapTriggerCount )
             {
-                const FEventTriggerHandle* pTriggerHandle = mapCachedTriggerHandle.Find( TriggerID );
-                if( pTriggerHandle == nullptr )
+                checkf( TriggerID.Value > 0, TEXT( "Trigger count must be greater than zero." ) );
+
+                // 등록된 해당 ID의 트리거가 필요한 트리거 개수보다 적다면 실패
+                const TSet<int64>* setTriggerUIDs = mapEventTriggerUIDs.Find( TriggerID.Key );
+                if( setTriggerUIDs == nullptr || setTriggerUIDs->Num() < TriggerID.Value )
                     break;
 
-                AEventTriggerObjectBase* pOtherEventTrigger = pTriggerHandle->EventTrigger.Get();
-                if( IsValid( pOtherEventTrigger ) == false || pOtherEventTrigger->GetTriggerState() != EEventTriggerState::Triggered )
+                int iRemainingCount = TriggerID.Value;
+                for( int64 iTriggerUID : *setTriggerUIDs )
+                {
+                    const FEventTriggerHandle* pTriggerHandle = mapCachedTriggerHandle.Find( iTriggerUID );
+                    if( pTriggerHandle == nullptr )
+                        continue;
+
+                    AEventTriggerObjectBase* pOtherEventTrigger = pTriggerHandle->EventTrigger.Get();
+                    if( IsValid( pOtherEventTrigger ) == false || pOtherEventTrigger->GetTriggerState() != EEventTriggerState::Triggered )
+                        continue;
+
+                    // 해당 ID의 트리거 개수를 충족했다면 for문 나가기
+                    if( --iRemainingCount <= 0 )
+                        break;
+                }
+
+                // 해당 ID의 트리거 개수를 충족하지 못했다면 실패
+                if( iRemainingCount > 0 )
                     break;
 
-                ++iTriggeredCount;
+				--iRemainingTriggerCount;
             }
 
-            if( iTriggeredCount < setTriggerIDs.Num() )
+            // 트리거 횟수를 충족하지 못했다면 실패
+            if( iRemainingTriggerCount > 0 )
                 break;
 
             eResult = EEventTriggerResult::Success;

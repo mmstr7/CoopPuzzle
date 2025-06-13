@@ -36,25 +36,29 @@ class COOPPUZZLE_API UEventTriggerManagerSubsystem : public UGameInstanceSubsyst
 	GENERATED_BODY()
 	
 public:
-	void TriggerManualEvent( const int64& iPlayerUID, EManualTriggerMode eEventTriggerMode );
-	void TriggerAutoEvent( const int64& iPlayerUID, EEventTriggerCondition eConditionType, const FName& ConditionKey );
+	void TriggerManualEvent( int64 iPlayerUID, EManualTriggerMode eEventTriggerMode );
+	void TriggerAutoEvent( int64 iPlayerUID, EEventTriggerCondition eConditionType, const FName& ConditionKey );
 
 	void RegisterEventTrigger( AEventTriggerObjectBase* pEventTrigger, const FOnEventTriggerCompleted& OnCompletedCallback );
-	void UnregisterEventTrigger( const FName& EventTriggerID );
+	void UnregisterEventTrigger( int64 iEventTriggerUID );
 
-	void LinkPlayerToEventTrigger( const int64& iPlayerUID, const FName& EventTriggerID );
-	void UnlinkPlayerToEventTrigger( const int64& iPlayerUID, const FName& EventTriggerID );
+	void LinkPlayerToEventTrigger( int64 iPlayerUID, int64 EventTriggerUID );
+	void UnlinkPlayerToEventTrigger( int64 iPlayerUID, int64 EventTriggerUID );
 
 protected:
 	virtual bool ShouldCreateSubsystem( UObject* Outer ) const override;
 
 private:
-	EEventTriggerResult TriggerEvent( const int64& iPlayerUID, const FName& EventTriggerID, bool bIsManualTriggerd, EManualTriggerMode eEventTriggerMode = EManualTriggerMode::None );
+	EEventTriggerResult TriggerEvent( int64 iPlayerUID, int64 EventTriggerUID, bool bIsManualTriggerd, EManualTriggerMode eEventTriggerMode = EManualTriggerMode::None );
 
-	TMap<int64/*PlayerUID*/, FName/*EventTriggerID*/> mapLinkedPlayerToEventTrigger;
-	TMap<FName/*EventTriggerID*/, TSet<int64/*PlayerUID*/> > mapLinkedEventTriggerToPlayer;
-	TMap<FName/*EventTriggerID*/, FEventTriggerHandle> mapCachedTriggerHandle;
+	TMap<int64/*PlayerUID*/, int64/*EventTriggerUID*/> mapLinkedPlayerToEventTrigger;
+	TMap<int64/*EventTriggerUID*/, TSet<int64/*PlayerUID*/> > mapLinkedEventTriggerToPlayer;
+
+	TMap<int64/*EventTriggerUID*/, FEventTriggerHandle> mapCachedTriggerHandle;
+	TMap<int64/*EventTriggerUID*/, FName/*EventTriggerID*/> mapEventTriggerIDs;
+	TMap<FName/*EventTriggerID*/, TSet<int64>/*EventTriggerUID*/> mapEventTriggerUIDs;
 
 	// 조건 충족 시 즉시 실행해야 하는 트리거 정보. 한 번 트리거 된 데이터는 제거됩니다. (재실행 불가)
+	// ID 기반으로 동작하며, 특정 ID의 트리거가 조건이 충족되었다면 동일한 ID의 트리거들은 무조건 이벤트 실행합니다.
 	TMap<EEventTriggerCondition, TMap<FName/*EventTriggerID*/, FEventTriggerConditionParams>> mapCachedAutoTriggerConditions;
 };

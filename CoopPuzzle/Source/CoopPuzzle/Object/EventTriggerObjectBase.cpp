@@ -9,7 +9,6 @@
 #include "Components/StaticMeshComponent.h"
 #include "CoopPuzzle/Game/CoopPuzzleGameInstance.h"
 #include "Net/UnrealNetwork.h"
-#include "CoopPuzzle/Subsystem/WorldActorManagerSubsystem.h"
 #include "Components/WidgetComponent.h"
 #include "CoopPuzzle/Widget/SimpleTextWidget.h"
 
@@ -49,10 +48,11 @@ void AEventTriggerObjectBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if( IsValid( GetGameInstance() ) == false )
+	UCoopPuzzleGameInstance* pGameInstance = Cast<UCoopPuzzleGameInstance>( GetGameInstance() );
+	if( IsValid( pGameInstance ) == false )
 		return;
 
-	UDataTableSubsystem* pDataTableSubsystem = GetGameInstance()->GetSubsystem<UDataTableSubsystem>();
+	UDataTableSubsystem* pDataTableSubsystem = pGameInstance->GetSubsystem<UDataTableSubsystem>();
 	checkf( IsValid( pDataTableSubsystem ) == true, TEXT( "DataTableSubsystem is not valid. Please check class." ) );
 
 	m_pEventTriggerData = pDataTableSubsystem->GetDataRowOrNull<FEventTriggerDataRow>( EDataTableType::EventTrigger, EventTriggerID );
@@ -61,18 +61,14 @@ void AEventTriggerObjectBase::BeginPlay()
 	// DE일 경우 관련 서브시스템에 데이터 등록
 	if( IsNetMode( NM_DedicatedServer ) == true )
 	{
+		m_iEventTriggerUID_DE = pGameInstance->GenerateUID_DE();
+
 		SetTriggerState_DE( m_pEventTriggerData->DefaultState );
 
-		UEventTriggerManagerSubsystem* pEventTriggerSubsystem = GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>();
+		UEventTriggerManagerSubsystem* pEventTriggerSubsystem = pGameInstance->GetSubsystem<UEventTriggerManagerSubsystem>();
 		if( IsValid( pEventTriggerSubsystem ) == true )
 		{
 			pEventTriggerSubsystem->RegisterEventTrigger( this, FOnEventTriggerCompleted::CreateUObject( this, &AEventTriggerObjectBase::OnTriggered_DE ) );
-		}
-
-		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = GetGameInstance()->GetSubsystem<UWorldActorManagerSubsystem>();
-		if( IsValid( pWorldActorManagerSubsystem ) == true )
-		{
-			pWorldActorManagerSubsystem->RegisterEventTrigger( this );
 		}
 	}
 
@@ -89,7 +85,7 @@ void AEventTriggerObjectBase::BeginPlay()
 		}
 	}
 
-	//CL이고 인디케이터 텍스트가 세팅되어 있다면 오버랩 이벤트 켜기
+	// CL이고 인디케이터 텍스트가 세팅되어 있다면 오버랩 이벤트 켜기
 	if( IsValid( HintTextVolume_CL ) == true )
 	{
 		bool bEnableOverlap = IsNetMode( NM_Client ) == true && m_pEventTriggerData->HintText.IsEmpty() == false;
@@ -110,19 +106,16 @@ void AEventTriggerObjectBase::EndPlay( const EEndPlayReason::Type EndPlayReason 
 
 	if( IsNetMode( NM_DedicatedServer ) == true )
 	{
-		if( IsValid( GetGameInstance() ) == false )
+		UCoopPuzzleGameInstance* pGameInstance = Cast< UCoopPuzzleGameInstance>( GetGameInstance() );
+		if( IsValid( pGameInstance ) == false )
 			return;
+
+		m_iEventTriggerUID_DE = pGameInstance->GenerateUID_DE();
 
 		UEventTriggerManagerSubsystem* pEventTriggerSubsystem = GetGameInstance()->GetSubsystem<UEventTriggerManagerSubsystem>();
 		if( IsValid( pEventTriggerSubsystem ) == true )
 		{
-			pEventTriggerSubsystem->UnregisterEventTrigger( GetEventTriggerID() );
-		}
-
-		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = GetGameInstance()->GetSubsystem<UWorldActorManagerSubsystem>();
-		if( IsValid( pWorldActorManagerSubsystem ) == true )
-		{
-			pWorldActorManagerSubsystem->UnregisterEventTrigger( GetEventTriggerID() );
+			pEventTriggerSubsystem->UnregisterEventTrigger( m_iEventTriggerUID_DE );
 		}
 	}
 
@@ -173,7 +166,7 @@ void AEventTriggerObjectBase::OnTriggerVolumeBeginOverlap_DE( class UPrimitiveCo
 	if( IsValid( pEventTriggerSubsystem ) == false )
 		return;
 
-	pEventTriggerSubsystem->LinkPlayerToEventTrigger( pPlayer->GetPlayerUID(), GetEventTriggerID() );
+	pEventTriggerSubsystem->LinkPlayerToEventTrigger( pPlayer->GetPlayerUID(), GetEventTriggerUID_DE() );
 }
 
 void AEventTriggerObjectBase::OnTriggerVolumeEndOverlap_DE( class UPrimitiveComponent* pOverlappedComp, AActor* pOtherActor, UPrimitiveComponent* pOtherComp, int32 iOtherBodyIndex )
@@ -186,7 +179,7 @@ void AEventTriggerObjectBase::OnTriggerVolumeEndOverlap_DE( class UPrimitiveComp
 	if( IsValid( pEventTriggerSubsystem ) == false )
 		return;
 
-	pEventTriggerSubsystem->UnlinkPlayerToEventTrigger( pPlayer->GetPlayerUID(), GetEventTriggerID() );
+	pEventTriggerSubsystem->UnlinkPlayerToEventTrigger( pPlayer->GetPlayerUID(), GetEventTriggerUID_DE() );
 }
 
 void AEventTriggerObjectBase::OnIndicatorTextVolumeBeginOverlap_CL( UPrimitiveComponent* pOverlappedComp, AActor* pOtherActor, UPrimitiveComponent* pOtherComp, int32 iOtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult )

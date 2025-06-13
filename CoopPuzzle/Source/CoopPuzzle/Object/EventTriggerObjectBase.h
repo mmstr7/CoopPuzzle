@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "CoopPuzzle/Data/CoopPuzzleEnums.h"
+#include "CoopPuzzle/Data/CoopPuzzleConstants.h"
 #include "EventTriggerObjectBase.generated.h"
 
 class ACoopPuzzleCharacter;
@@ -24,6 +25,7 @@ public:
 	AEventTriggerObjectBase();
 
 	FORCEINLINE const FName& GetEventTriggerID() const { return EventTriggerID; }
+	FORCEINLINE int64 GetEventTriggerUID_DE() const { return m_iEventTriggerUID_DE; }
 
 	// 유효성은 BeginPlay의 checkf로 보장되므로 이후에는 null 체크 없이 바로 사용해도 안전합니다.
 	FORCEINLINE const FEventTriggerDataRow* GetTriggerData() const { return m_pEventTriggerData; }
@@ -84,6 +86,8 @@ private:
 	// 반드시 SetTriggerState_DE()를 통해서만 R_eTriggerState를 변경할 것!
 	UPROPERTY( ReplicatedUsing=OnRep_TriggerState )
 	EEventTriggerState R_eTriggerState = EEventTriggerState::Disabled;
+
+	int64 m_iEventTriggerUID_DE = INVALID_TRIGGER_UID;
 
 	// 이벤트 트리거 데이터 테이블(FEventTriggerDataRow) 고정 포인터 입니다.
 	// BeginPlay에서 한 번만 세팅되며, 이후 변경/해제되지 않습니다.

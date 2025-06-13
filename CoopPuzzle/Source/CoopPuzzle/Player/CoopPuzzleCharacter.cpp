@@ -9,7 +9,6 @@
 #include "CoopPuzzle/Player/CoopPuzzlePlayerController.h"
 #include "CoopPuzzle/Subsystem/EventTriggerManagerSubsystem.h"
 #include "CoopPuzzle/Game/CoopPuzzleGameInstance.h"
-#include "CoopPuzzle/Subsystem/WorldActorManagerSubsystem.h"
 #include "CoopPuzzle/Player/CoopPuzzlePlayerState.h"
 #include "Net/UnrealNetwork.h"
 
@@ -59,29 +58,6 @@ void ACoopPuzzleCharacter::BeginPlay()
 			return;
 
 		R_iPlayerUID = pGameInstance->GenerateUID_DE();
-
-		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = pGameInstance->GetSubsystem<UWorldActorManagerSubsystem>();
-		if( IsValid( pWorldActorManagerSubsystem ) == true )
-		{
-			pWorldActorManagerSubsystem->RegisterPlayer( this );
-		}
-	}
-}
-
-void ACoopPuzzleCharacter::EndPlay( const EEndPlayReason::Type EndPlayReason )
-{
-	Super::EndPlay( EndPlayReason );
-
-	if( GetNetMode() == NM_DedicatedServer )
-	{
-		if( IsValid( GetGameInstance() ) == false )
-			return;
-		
-		UWorldActorManagerSubsystem* pWorldActorManagerSubsystem = GetGameInstance()->GetSubsystem<UWorldActorManagerSubsystem>();
-		if( IsValid( pWorldActorManagerSubsystem ) == true )
-		{
-			pWorldActorManagerSubsystem->UnregisterPlayer( GetPlayerUID() );
-		}
 	}
 }
 

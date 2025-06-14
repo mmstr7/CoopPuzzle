@@ -32,6 +32,6 @@ public:
 protected:
 	virtual void Initialize( FSubsystemCollectionBase& Collection ) override;
 	
-	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = Setting  )
+	UPROPERTY()
 	TMap<EDataTableType, UDataTable*> DataTableMap;
 };

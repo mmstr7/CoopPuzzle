@@ -72,3 +72,10 @@ enum class EProcessState : uint8
 	Waiting					UMETA( DisplayName = "Waiting" ),
 	Finished				UMETA( DisplayName = "Finished" ),
 };
+
+UENUM(BlueprintType)
+enum class ETooltipType : uint8
+{
+	Item					UMETA( DisplayName = "Item" ),
+	MAX						UMETA( Hidden ),
+};

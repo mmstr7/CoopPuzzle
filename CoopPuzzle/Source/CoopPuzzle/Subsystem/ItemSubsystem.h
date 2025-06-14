@@ -25,6 +25,7 @@ class COOPPUZZLE_API UItemSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
+	void GetItemID( int64 iItemUID, FName& ItemID ) const;
 	int32 GetItemCount( int64 iItemUID ) const;
 	UTexture2D* GetItemIcon( int64 iItemUID ) const;
 

@@ -8,6 +8,11 @@
 #include "CoopPuzzle/Subsystem/WidgetDelegateSubsystem.h"
 #include "CoopPuzzle/Subsystem/DataTableSubsystem.h"
 
+void UItemSubsystem::GetItemID( int64 iItemUID, FName& ItemID ) const
+{
+    ItemID = m_mapGeneratedItemInfos.FindRef( iItemUID ).Key;
+}
+
 int32 UItemSubsystem::GetItemCount( int64 iItemUID ) const
 {
     return m_mapGeneratedItemInfos.FindRef( iItemUID ).Value;

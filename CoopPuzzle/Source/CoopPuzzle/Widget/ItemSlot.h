@@ -25,6 +25,8 @@ public:
 
 protected:
 	virtual void NativeOnListItemObjectSet( UObject* ListItemObject ) override;
+	virtual	FReply NativeOnMouseButtonDown( const FGeometry& InGeometry, const FPointerEvent& InMouseEvent ) override;
+	virtual void NativeOnDragDetected( const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation ) override;
 
 	// BP의 Detail 툴팁 위젯 세팅에 해당 함수를 바인딩 합니다.
 	UFUNCTION( BlueprintCallable )

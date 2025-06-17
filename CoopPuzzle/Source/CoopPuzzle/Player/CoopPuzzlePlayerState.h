@@ -48,6 +48,10 @@ private:
 	UFUNCTION( Client, Reliable )
 	void CLIENT_OnUpdateInventoryItem( const TArray<FItemSyncInfo>& arrUpdateItemInfos );
 	void CLIENT_OnUpdateInventoryItem_Implementation( const TArray<FItemSyncInfo>& arrUpdateItemInfos );
+
+	UFUNCTION( Server, Reliable )
+	void SERVER_OnTransferItemBetweenPlayers( int64 iTargetPlayerUID, int64 iItemUID, int32 iItemCount, int64 iSenderPlayerUID );
+	void SERVER_OnTransferItemBetweenPlayers_Implementation( int64 iTargetPlayerUID, int64 iItemUID, int32 iItemCount, int64 iSenderPlayerUID );
 #pragma endregion
 	
 #pragma region [LevelSequenceSubsystemHelper]

@@ -83,6 +83,13 @@ void ACoopPuzzlePlayerState::CLIENT_BindEventDelegates_Implementation( int64 Pla
 	{
 		pLevelSequenceSubsystem->OnLevelSequenceFinished_ToServer.BindUObject( this, &ACoopPuzzlePlayerState::SERVER_OnLevelSequenceFinished );
 	}
+
+	// ItemSubsystem 헬퍼 함수 바인딩
+	UItemSubsystem* pItemSubsystem = GetGameInstance()->GetSubsystem<UItemSubsystem>();
+	if( IsValid( pItemSubsystem ) == true )
+	{
+		pItemSubsystem->OnTransferItemBetweenPlayers_ToServer.BindUObject( this, &ACoopPuzzlePlayerState::SERVER_OnTransferItemBetweenPlayers );
+	}
 }
 
 void ACoopPuzzlePlayerState::CLIENT_UnbindEventDelegates_Implementation( int64 iPlayerUID )
@@ -92,6 +99,13 @@ void ACoopPuzzlePlayerState::CLIENT_UnbindEventDelegates_Implementation( int64 i
 	if( IsValid( pLevelSequenceSubsystem ) == true )
 	{
 		pLevelSequenceSubsystem->OnLevelSequenceFinished_ToServer.Unbind();
+	}
+
+	// ItemSubsystem 헬퍼 함수 언바인딩
+	UItemSubsystem* pItemSubsystem = GetGameInstance()->GetSubsystem<UItemSubsystem>();
+	if( IsValid( pItemSubsystem ) == true )
+	{
+		pItemSubsystem->OnTransferItemBetweenPlayers_ToServer.Unbind();
 	}
 }
 
@@ -123,6 +137,15 @@ void ACoopPuzzlePlayerState::CLIENT_OnUpdateInventoryItem_Implementation( const 
 		return;
 
 	pItemSubsystem->OnUpdateInventoryItem_ToClient.FindOrAdd( 0 ).ExecuteIfBound( arrUpdateItemInfos );
+}
+
+void ACoopPuzzlePlayerState::SERVER_OnTransferItemBetweenPlayers_Implementation( int64 iTargetPlayerUID, int64 iItemUID, int32 iItemCount, int64 iSenderPlayerUID )
+{
+	UItemSubsystem* pItemSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UItemSubsystem>() : nullptr;
+	if( IsValid( pItemSubsystem ) == false )
+		return;
+
+	pItemSubsystem->OnTransferItemBetweenPlayers_ToServer.ExecuteIfBound( iTargetPlayerUID, iItemUID, iItemCount, iSenderPlayerUID );
 }
 #pragma endregion
 

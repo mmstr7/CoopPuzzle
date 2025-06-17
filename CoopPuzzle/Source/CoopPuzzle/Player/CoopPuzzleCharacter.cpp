@@ -11,6 +11,9 @@
 #include "CoopPuzzle/Game/CoopPuzzleGameInstance.h"
 #include "CoopPuzzle/Player/CoopPuzzlePlayerState.h"
 #include "Net/UnrealNetwork.h"
+#include "Components/WidgetComponent.h"
+#include "CoopPuzzle/Widget/ItemDropPad.h"
+#include "CoopPuzzle/Subsystem/PlayerManagerSubsystem.h"
 
 ACoopPuzzleCharacter::ACoopPuzzleCharacter()
 {
@@ -38,6 +41,12 @@ ACoopPuzzleCharacter::ACoopPuzzleCharacter()
 
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	ItemDropPad = CreateDefaultSubobject<UWidgetComponent>( TEXT( "ItemDropPad" ) );
+	ItemDropPad->SetupAttachment( RootComponent );
+	ItemDropPad->SetWidgetClass( UItemDropPad::StaticClass() );
+	ItemDropPad->SetWidgetSpace( EWidgetSpace::Screen );
+	ItemDropPad->SetDrawAtDesiredSize( true );
 }
 
 void ACoopPuzzleCharacter::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
@@ -51,13 +60,31 @@ void ACoopPuzzleCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UCoopPuzzleGameInstance* pGameInstance = Cast<UCoopPuzzleGameInstance>( GetGameInstance() );
+	if( IsValid( pGameInstance ) == false )
+		return;
+
 	if( GetNetMode() == NM_DedicatedServer )
 	{
-		UCoopPuzzleGameInstance* pGameInstance = Cast<UCoopPuzzleGameInstance>( GetGameInstance() );
-		if( IsValid( pGameInstance ) == false )
-			return;
-
+		// DE
 		R_iPlayerUID = pGameInstance->GenerateUID_DE();
+
+		UPlayerManagerSubsystem* pPlayerManagerSubsystem = pGameInstance->GetSubsystem<UPlayerManagerSubsystem>();
+		if( IsValid( pPlayerManagerSubsystem ) == true )
+		{
+			pPlayerManagerSubsystem->RegisterPlayer( this );
+		}
+	}
+	else
+	{
+		// CL
+		if( IsValid( ItemDropPad ) == true )
+		{
+			UpdateDropPadAccountUID_CL();
+
+			// 로컬 유저가 아닌 경우에만 아이템 드롭 패드 가시성 활성화
+			ItemDropPad->SetVisibility( pGameInstance->IsLocalPlayer_CL( this ) == false );
+		}
 	}
 }
 
@@ -113,6 +140,27 @@ void ACoopPuzzleCharacter::OnKeyPressed_DE( EPlayerInputType ePlayerInputType ) 
 		pTriggerManagerSubsystem->TriggerManualEvent( GetPlayerUID(), EManualTriggerMode::InputInteractKey );
 	} break;
 	default:
+		// TODO : checkf 추가
 		break;
 	}
+}
+
+void ACoopPuzzleCharacter::OnRep_PlayerUID()
+{
+	if( R_iPlayerUID == INVALID_PLAYER_UID )
+		return;
+
+	UpdateDropPadAccountUID_CL();
+}
+
+void ACoopPuzzleCharacter::UpdateDropPadAccountUID_CL()
+{
+	if( IsValid( ItemDropPad ) == false )
+		return;
+
+	UItemDropPad* pItemDropPad = Cast<UItemDropPad>( ItemDropPad->GetWidget() );
+	if( IsValid( pItemDropPad ) == false )
+		return;
+
+	pItemDropPad->SetOwnerPlayerUID( R_iPlayerUID );
 }

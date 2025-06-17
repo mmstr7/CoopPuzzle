@@ -2,7 +2,6 @@
 
 
 #include "CoopPuzzle/Widget/SimpleTextWidget.h"
-#include "SimpleTextWidget.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/WidgetTree.h"
 

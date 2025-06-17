@@ -2,48 +2,51 @@
 
 
 #include "CoopPuzzle/Widget/NotificationText.h"
-#include "NotificationText.h"
 #include "Components/TextBlock.h"
+#include "Components/VerticalBox.h"
 
 void UNotificationText::AddNotification( const FText& Message )
 {
-	if( IsValid( NotificationText ) == false )
+	if( IsValid( VerticalBox ) == false )
 		return;
 
-	NotificationText->SetText( Message );
-	NotificationText->SetVisibility( ESlateVisibility::HitTestInvisible );
-	bNotificationEnded = false;
-	LastNotificationTime = FDateTime::UtcNow();
-}
+	UTextBlock* pNewTextBlock = NewObject<UTextBlock>( this );
+	if( IsValid( pNewTextBlock ) == false )
+		return;
 
-void UNotificationText::NativePreConstruct()
-{
-	Super::NativePreConstruct();
+	pNewTextBlock->SetText( Message );
+	pNewTextBlock->SetVisibility( ESlateVisibility::HitTestInvisible );
+	pNewTextBlock->SetFont( NotificationFont );
+	pNewTextBlock->SetColorAndOpacity( NotificationColor );
+	pNewTextBlock->SetJustification( ETextJustify::Type::Center );
 
-	if( IsValid( NotificationText ) == true )
-	{
-		NotificationText->SetFont( NotificationFont );
-		NotificationText->SetColorAndOpacity( NotificationColor );
-	}
+
+	m_queueExpireTimes.Enqueue( FDateTime::UtcNow() + FTimespan::FromSeconds( NotificationDuration ) );
+
+	VerticalBox->AddChildToVerticalBox( pNewTextBlock );
 }
 
 void UNotificationText::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if( IsValid( NotificationText ) == false )
-		return;
-
-	NotificationText->SetVisibility( ESlateVisibility::Collapsed );
+	if( IsValid( VerticalBox ) == true )
+	{
+		VerticalBox->ClearChildren();
+	}
 }
 
 void UNotificationText::NativeTick( const FGeometry& MyGeometry, float InDeltaTime )
 {
 	Super::NativeTick( MyGeometry, InDeltaTime );
 
-	if( bNotificationEnded == false && FDateTime::UtcNow() >= ( LastNotificationTime + FTimespan::FromSeconds( NotificationDuration ) ) )
+	if( m_queueExpireTimes.IsEmpty() == false && FDateTime::UtcNow() >= *m_queueExpireTimes.Peek() )
 	{
-		NotificationText->SetVisibility( ESlateVisibility::Collapsed );
-		bNotificationEnded = true;
+		m_queueExpireTimes.Pop();
+
+		if( IsValid( VerticalBox ) == false )
+			return;
+		
+		VerticalBox->RemoveChildAt( 0 );
 	}
 }

@@ -8,6 +8,7 @@
 #include "NotificationText.generated.h"
 
 class UTextBlock;
+class UVerticalBox;
 
 /**
  * 
@@ -30,14 +31,12 @@ public:
 	float NotificationDuration = 3.f;
 
 protected:
-	virtual void NativePreConstruct() override;
 	virtual void NativeConstruct() override;
 	virtual void NativeTick( const FGeometry& MyGeometry, float InDeltaTime ) override;
 
 private:
 	UPROPERTY( meta = (BindWidget))
-	UTextBlock* NotificationText;
+	UVerticalBox* VerticalBox;
 
-	FDateTime LastNotificationTime = FDateTime::MinValue();
-	bool bNotificationEnded = true;
+	TQueue<FDateTime> m_queueExpireTimes;
 };

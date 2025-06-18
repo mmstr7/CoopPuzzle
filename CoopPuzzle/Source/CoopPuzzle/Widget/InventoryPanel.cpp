@@ -7,6 +7,7 @@
 #include "Components/TileView.h"
 #include "CoopPuzzle/Data/CoopPuzzleUObjects.h"
 #include "CoopPuzzle/Widget/ItemSlot.h"
+#include "CoopPuzzle/Widget/NotificationText.h"
 
 void UInventoryPanel::NativeConstruct()
 {
@@ -17,6 +18,7 @@ void UInventoryPanel::NativeConstruct()
 	{
 		pWidgetDelegateSubsystem->OnPlayerInventoryUpdated_ToClient.FindOrAdd( 0 ).AddUObject( this, &UInventoryPanel::UpdateInventoryPanel );
 		pWidgetDelegateSubsystem->OnLevelSequenceStateChanged.AddUObject( this, &UInventoryPanel::LevelSequenceStateChanged );
+		pWidgetDelegateSubsystem->OnShowItemNotifications_ToClient.FindOrAdd( 0 ).AddUObject( this, &UInventoryPanel::AddItemNotifications );
 	}
 
 	UpdateInventoryPanel();
@@ -77,4 +79,34 @@ void UInventoryPanel::UpdateInventoryPanel()
 void UInventoryPanel::LevelSequenceStateChanged( EProcessState eState )
 {
 	SetVisibility( eState == EProcessState::Finished ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed );
+}
+
+void UInventoryPanel::AddItemNotifications( const TArray<FItemNotifyInfo>& arrNotifications )
+{
+	if( IsValid( ItemUpdateNotification ) == false )
+		return;
+
+	UItemSubsystem* pItemSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UItemSubsystem>() : nullptr;
+	if( IsValid( pItemSubsystem ) == false )
+		return;
+
+	UEnum* pEnum = StaticEnum<EItemNotification>();
+	if( IsValid( pEnum ) == false )
+		return;
+
+	for( const FItemNotifyInfo& Info : arrNotifications )
+	{
+		FText ItemName;
+		pItemSubsystem->GetItemName( Info.ItemID, ItemName );
+
+		FString EnumString = FString::Printf( TEXT( "%s::%s" ), *pEnum->GetName(), *pEnum->GetNameStringByValue( ( int64 )Info.ItemNotificationType ) );
+		FText FormatText = FText::FromStringTable( FName( TEXT( "/Game/TopDown/DataTable/EnumStringTable" ) ), EnumString );
+
+		UE_LOG( LogTemp, Error, TEXT( "%s" ), *EnumString );
+
+		if( ItemName.IsEmpty() == true || FormatText.IsEmpty() == true )
+			continue;
+
+		ItemUpdateNotification->AddNotification( FText::Format( FormatText, FFormatNamedArguments{ { TEXT( "ItemName" ), ItemName } } ) );
+	}
 }

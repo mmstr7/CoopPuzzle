@@ -37,7 +37,8 @@ public:
 
 	void GetItemID( int64 iItemUID, FName& ItemID ) const;
 	int32 GetItemCount( int64 iItemUID ) const;
-	UTexture2D* GetItemIcon( int64 iItemUID ) const;
+	UTexture2D* GetItemIcon( const FName& ItemID ) const;
+	void GetItemName( const FName& ItemID, FText& ItemName ) const;
 	void GetPlayerInventoryItemUIDs( int64 iPlayerUID/*CL은 0으로 통일*/, TArray<int64>& arrItemUIDs, bool bSort ) const;
 
 	// [주의] 외부에서 직접 호출하지 마세요. PlayerState를 경유하여 네트워크 통신(DE → CL)에 사용되는 델리게이트입니다.

@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "CoopPuzzle/Data/CoopPuzzleEnums.h"
+#include "CoopPuzzle/Data/CoopPuzzleStructs.h"
 #include "CoopPuzzlePlayerState.generated.h"
 
 class ACoopPuzzleCharacter;
@@ -42,6 +44,10 @@ private:
 	UFUNCTION( Client, Reliable )
 	void CLIENT_OnPlayerInventoryUpdated();
 	void CLIENT_OnPlayerInventoryUpdated_Implementation();
+
+	UFUNCTION( Client, Reliable )
+	void CLIENT_OnShowItemNotifications( const TArray<FItemNotifyInfo>& arrNotificationInfos );
+	void CLIENT_OnShowItemNotifications_Implementation( const TArray<FItemNotifyInfo>& arrNotificationInfos );
 #pragma endregion
 
 #pragma region [ItemSubsystemHelper]

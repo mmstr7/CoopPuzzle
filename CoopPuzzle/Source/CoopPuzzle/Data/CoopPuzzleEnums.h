@@ -79,3 +79,14 @@ enum class ETooltipType : uint8
 	Item					UMETA( DisplayName = "Item" ),
 	MAX						UMETA( Hidden ),
 };
+
+UENUM(BlueprintType)
+enum class EItemNotification : uint8
+{
+	None					UMETA( Hidden ),
+	Acquire					UMETA( DisplayName = "Acquire" ),
+	Consume					UMETA( DisplayName = "Consume" ),
+	TransferSuccess_Sender	UMETA( DisplayName = "TransferSuccess_Sender" ),
+	TransferSuccess_Target	UMETA( DisplayName = "TransferSuccess_Target" ),
+	TransferFail_OutOfRange	UMETA( DisplayName = "TransferFail_OutOfRange" ),
+};

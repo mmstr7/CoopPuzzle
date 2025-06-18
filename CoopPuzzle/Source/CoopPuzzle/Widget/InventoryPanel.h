@@ -8,7 +8,7 @@
 #include "InventoryPanel.generated.h"
 
 class UTileView;
-class UButton;
+class UNotificationText;
 
 /**
  * 
@@ -28,6 +28,12 @@ private:
 
 	UFUNCTION()
 	void LevelSequenceStateChanged( EProcessState eState );
+
+	UFUNCTION()
+	void AddItemNotifications( const TArray<FItemNotifyInfo>& arrNotifications );
+
+	UPROPERTY( meta = (BindWidget))
+	UNotificationText* ItemUpdateNotification;
 
 	UPROPERTY( meta = (BindWidget))
 	UTileView* ItemList;

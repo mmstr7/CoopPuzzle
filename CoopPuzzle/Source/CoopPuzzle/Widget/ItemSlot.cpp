@@ -19,15 +19,15 @@ void UItemSlot::SetItemInfo( int64 iItemUID, bool bIsInit )
 
     if( bIsInit == true || iItemUID != m_iCachedItemUID )
     {
+        m_iCachedItemUID = iItemUID;
+        pItemSubsystem->GetItemID( iItemUID, m_CachedItemID );
+
         if( IsValid( ItemIconImage ) == true )
         {
-            UTexture2D* pItemIconTexture = pItemSubsystem->GetItemIcon( iItemUID );
+            UTexture2D* pItemIconTexture = pItemSubsystem->GetItemIcon( m_CachedItemID );
             ItemIconImage->SetBrushFromTexture( pItemIconTexture, true );
             ItemIconImage->SetVisibility( IsValid( pItemIconTexture ) == true ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed );
         }
-
-        m_iCachedItemUID = iItemUID;
-        pItemSubsystem->GetItemID( iItemUID, m_CachedItemID );
     }
 
     if( IsValid( ItemCountText ) == true )

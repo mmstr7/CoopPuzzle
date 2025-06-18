@@ -44,8 +44,8 @@ struct FItemSyncInfo
 
 	FItemSyncInfo() {}
 
-	FItemSyncInfo( int64 ItemUID_, const FName& ItemID_, int32 Count_ )
-		: ItemUID(ItemUID_ ), ItemID( ItemID_ ), Count(Count_) { }
+	FItemSyncInfo( int64 ItemUID_, const FName& ItemID_, int32 Count_, EItemNotification NotificationType_ )
+		: ItemUID(ItemUID_ ), ItemID( ItemID_ ), Count(Count_), NotificationType( NotificationType_ ) { }
 
 	UPROPERTY( BlueprintReadOnly )
 	int64 ItemUID = -1;
@@ -55,4 +55,26 @@ struct FItemSyncInfo
 
     UPROPERTY( BlueprintReadOnly )
 	int32 Count = 0;
+
+	// 위젯 알림 전용
+	UPROPERTY( BlueprintReadOnly )
+	EItemNotification NotificationType = EItemNotification::None;
+};
+
+USTRUCT( BlueprintType )
+struct FItemNotifyInfo
+{
+	GENERATED_BODY()
+
+public:
+	FItemNotifyInfo(){}
+
+	FItemNotifyInfo( const FName& ItemID_, EItemNotification ItemNotificationType_ )
+		: ItemID( ItemID_ ), ItemNotificationType(ItemNotificationType_) { }
+
+	UPROPERTY( EditAnywhere, BlueprintReadWrite )
+	FName ItemID;
+
+	UPROPERTY( EditAnywhere, BlueprintReadWrite )
+	EItemNotification ItemNotificationType = EItemNotification::None;
 };

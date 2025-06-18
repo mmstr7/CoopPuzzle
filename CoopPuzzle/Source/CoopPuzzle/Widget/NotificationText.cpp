@@ -20,7 +20,6 @@ void UNotificationText::AddNotification( const FText& Message )
 	pNewTextBlock->SetColorAndOpacity( NotificationColor );
 	pNewTextBlock->SetJustification( ETextJustify::Type::Center );
 
-
 	m_queueExpireTimes.Enqueue( FDateTime::UtcNow() + FTimespan::FromSeconds( NotificationDuration ) );
 
 	VerticalBox->AddChildToVerticalBox( pNewTextBlock );

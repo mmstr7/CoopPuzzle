@@ -42,20 +42,22 @@ bool UItemSubsystem::AddItems_DE( int64 iPlayerUID, const TMap<FName, int32>& ma
             }
         }
 
+        EItemNotification eNotificationType = ItemToAdd.Value > 0 ? EItemNotification::Acquire : EItemNotification::Consume;
+
         if( iItemUID > 0 )
         {
             int32 iUpdateItemCount = m_mapGeneratedItemInfos.FindRef( iItemUID ).Value + ItemToAdd.Value;
             if( iUpdateItemCount < 0 )
                 return false;
 
-            arrUpdateItemInfos.Add( FItemSyncInfo( iItemUID, ItemToAdd.Key, iUpdateItemCount ) );
+            arrUpdateItemInfos.Add( FItemSyncInfo( iItemUID, ItemToAdd.Key, iUpdateItemCount, eNotificationType ) );
         }
         else
         {
             if( ItemToAdd.Value < 0 )
                 return false;
 
-            arrUpdateItemInfos.Add( FItemSyncInfo( pGameInstance->GenerateUID_DE(), ItemToAdd.Key, ItemToAdd.Value ) );
+            arrUpdateItemInfos.Add( FItemSyncInfo( pGameInstance->GenerateUID_DE(), ItemToAdd.Key, ItemToAdd.Value, eNotificationType ) );
         }
     }
 
@@ -106,17 +108,22 @@ int32 UItemSubsystem::GetItemCount( int64 iItemUID ) const
     return m_mapGeneratedItemInfos.FindRef( iItemUID ).Value;
 }
 
-UTexture2D* UItemSubsystem::GetItemIcon( int64 iItemUID ) const
+UTexture2D* UItemSubsystem::GetItemIcon( const FName& ItemID ) const
 {
-    const auto* pItemInfo = m_mapGeneratedItemInfos.Find( iItemUID );
-    if( pItemInfo == nullptr )
-        return nullptr;
-
-    const FItemDataRow* pItemData = m_mapCachedItemData.FindRef( pItemInfo->Key );
+    const FItemDataRow* pItemData = m_mapCachedItemData.FindRef( ItemID );
     if( pItemData == nullptr )
         return nullptr;
 
     return pItemData->ItemIcon;
+}
+
+void UItemSubsystem::GetItemName( const FName& ItemID, FText& ItemName ) const
+{
+    const FItemDataRow* pItemData = m_mapCachedItemData.FindRef( ItemID );
+    if( pItemData == nullptr )
+        return;
+
+    ItemName = pItemData->ItemName;
 }
 
 void UItemSubsystem::GetPlayerInventoryItemUIDs( int64 iPlayerUID, TArray<int64>& arrItemUIDs, bool bSort ) const
@@ -155,11 +162,10 @@ void UItemSubsystem::UpdateItems( int64 iPlayerUID, const TArray<FItemSyncInfo>&
 {
     LoadItemDataIfNotLoaded();
 
-    UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>();
-    bool bIsWidgetDelegatesValid = IsValid( pWidgetDelegateSubsystem ) == true;
+    TArray<FItemNotifyInfo> arrNotifications;
+    bool bIsServer = GetGameInstance()->IsDedicatedServerInstance();
 
     TSet<int64/*ItemUID*/>& setPlayerInventoryItems = m_mapPlayerInventoryItems.FindOrAdd( iPlayerUID );
-
     for( const FItemSyncInfo& ItemInfo : arrUpdateItemInfos )
     {
         checkf( m_mapCachedItemData.Contains( ItemInfo.ItemID ) == true, TEXT( "ItemID '%s' is not valid. Please check ItemDataTable." ), *ItemInfo.ItemID.ToString() );
@@ -170,27 +176,35 @@ void UItemSubsystem::UpdateItems( int64 iPlayerUID, const TArray<FItemSyncInfo>&
             m_mapCachedInventoryItemOwners.Remove( ItemInfo.ItemUID );
             m_mapGeneratedItemUIDs.FindOrAdd( ItemInfo.ItemID ).Remove( ItemInfo.ItemUID );
             m_mapGeneratedItemInfos.Remove( ItemInfo.ItemUID );
-            continue;
+        }
+        else
+        {
+			setPlayerInventoryItems.Add( ItemInfo.ItemUID );
+			m_mapCachedInventoryItemOwners.Add( ItemInfo.ItemUID, iPlayerUID );
+			m_mapGeneratedItemUIDs.FindOrAdd( ItemInfo.ItemID ).Add( ItemInfo.ItemUID );
+			m_mapGeneratedItemInfos.Add( ItemInfo.ItemUID, TPair<FName, int32>( ItemInfo.ItemID, ItemInfo.Count ) );
         }
 
-        setPlayerInventoryItems.Add( ItemInfo.ItemUID );
-        m_mapCachedInventoryItemOwners.Add( ItemInfo.ItemUID, iPlayerUID );
-        m_mapGeneratedItemUIDs.FindOrAdd( ItemInfo.ItemID ).Add( ItemInfo.ItemUID );
-        m_mapGeneratedItemInfos.Add( ItemInfo.ItemUID, TPair<FName, int32>( ItemInfo.ItemID, ItemInfo.Count ) );
+        if( bIsServer == false && ItemInfo.NotificationType != EItemNotification::None )
+        {
+            arrNotifications.Emplace( ItemInfo.ItemID, ItemInfo.NotificationType );
+        }
     }
 
     if( IsValid( GetGameInstance() ) == false )
         return;
 
-    if( GetGameInstance()->IsDedicatedServerInstance() == true )
+    if( bIsServer == true )
     {
         OnUpdateInventoryItem_ToClient.FindOrAdd( iPlayerUID ).ExecuteIfBound( arrUpdateItemInfos );
     }
     else
     {
-        if( bIsWidgetDelegatesValid == true )
+        UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>();
+        if( IsValid( pWidgetDelegateSubsystem ) == true )
         {
             pWidgetDelegateSubsystem->OnPlayerInventoryUpdated_ToClient.FindOrAdd( 0 ).Broadcast();
+            pWidgetDelegateSubsystem->OnShowItemNotifications_ToClient.FindOrAdd( 0 ).Broadcast( arrNotifications );
         }
     }
 }
@@ -228,20 +242,19 @@ void UItemSubsystem::TransferItemBetweenPlayers( int64 iTargetPlayerUID, int64 i
         if( IsValid( pPlayerManagerSubsystem ) == false )
             return;
 
-        // 아이템 전달 거리가 부족할 경우 보내는 자 위젯에 알리고 실패
+        // 아이템 전달 거리가 부족할 경우 보내는 유저 CL 위젯에 알리고 실패
         if( pPlayerManagerSubsystem->IsPlayersInRange( iTargetPlayerUID, iSenderPlayerUID, 100.f ) == false )
         {
             UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = pGameInstance->GetSubsystem<UWidgetDelegateSubsystem>();
-            if( IsValid( pWidgetDelegateSubsystem ) == false )
-                return;
-
-			FText FailText = FText::FromStringTable( FName( TEXT( "/Game/TopDown/DataTable/GlobalStringTable" ) ), TEXT( "Item_Transfer_Fail_OutOfRange" ) );
-			pWidgetDelegateSubsystem->OnShowLocalNotification_ToClient.FindOrAdd( iSenderPlayerUID ).Broadcast( FailText );
+            if( IsValid( pWidgetDelegateSubsystem ) == true )
+            {
+			    pWidgetDelegateSubsystem->OnShowItemNotifications_ToClient.FindOrAdd( iSenderPlayerUID ).Broadcast( { FItemNotifyInfo( pItemInfo->Key, EItemNotification::TransferFail_OutOfRange ) } );
+            }
             return;
         }
 
         // 보내는 유저 아이템 수량 감소
-        UpdateItems( iSenderPlayerUID, { FItemSyncInfo( iItemUID, pItemInfo->Key, pItemInfo->Value - iItemCount ) } );
+        UpdateItems( iSenderPlayerUID, { FItemSyncInfo( iItemUID, pItemInfo->Key, pItemInfo->Value - iItemCount, EItemNotification::TransferSuccess_Sender ) } );
 
         // 받는 유저 아이템 추가
         AddItems_DE( iTargetPlayerUID, { { pItemInfo->Key, iItemCount } } );

@@ -6,10 +6,12 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Delegates/DelegateCombinations.h"
 #include "CoopPuzzle/Data/CoopPuzzleEnums.h"
+#include "CoopPuzzle/Data/CoopPuzzleStructs.h"
 #include "WidgetDelegateSubsystem.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam( FTextDelegate, const FText& );
 DECLARE_MULTICAST_DELEGATE_OneParam( FProcessStateDelegate, EProcessState );
+DECLARE_MULTICAST_DELEGATE_OneParam( FItemNotificationDelegate, const TArray<FItemNotifyInfo>& );
 
 /**
  * DE/CL 공용 서브시스템입니다.
@@ -29,6 +31,8 @@ public:
 	TMap<int64/*PlayerUID (CL은 0으로 통일)*/, FTextDelegate> OnShowLocalNotification_ToClient;
 
 	TMap<int64/*PlayerUID (CL은 0으로 통일)*/, FSimpleMulticastDelegate> OnPlayerInventoryUpdated_ToClient;
+
+	TMap<int64/*PlayerUID (CL은 0으로 통일)*/, FItemNotificationDelegate> OnShowItemNotifications_ToClient;
 
 	FProcessStateDelegate OnLevelSequenceStateChanged;
 };

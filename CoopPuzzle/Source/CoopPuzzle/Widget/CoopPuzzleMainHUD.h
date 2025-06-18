@@ -11,6 +11,7 @@ class UTextBlock;
 class UInventoryPanel;
 class UButton;
 class ULevelSequencePanel;
+class UKeyIconWidget;
 
 /**
  * 
@@ -35,6 +36,9 @@ protected:
 
 	UPROPERTY( EditAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	ULevelSequencePanel* LevelSequencePanel;
+
+	UPROPERTY( EditAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UKeyIconWidget* KeyIconWidget;
 
 private:
 	UFUNCTION()

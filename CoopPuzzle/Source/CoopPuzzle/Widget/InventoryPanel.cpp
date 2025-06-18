@@ -34,6 +34,7 @@ void UInventoryPanel::NativeDestruct()
 	{
 		pWidgetDelegateSubsystem->OnPlayerInventoryUpdated_ToClient.Remove( 0 );
 		pWidgetDelegateSubsystem->OnLevelSequenceStateChanged.RemoveAll( this );
+		pWidgetDelegateSubsystem->OnShowItemNotifications_ToClient.Remove( 0 );
 	}
 }
 

@@ -48,6 +48,10 @@ private:
 	UFUNCTION( Client, Reliable )
 	void CLIENT_OnShowItemNotifications( const TArray<FItemNotifyInfo>& arrNotificationInfos );
 	void CLIENT_OnShowItemNotifications_Implementation( const TArray<FItemNotifyInfo>& arrNotificationInfos );
+
+	UFUNCTION( Client, Reliable )
+	void CLIENT_OnShowPlayerInputIcon( EPlayerInputType ePlayerInputType, bool bShow );
+	void CLIENT_OnShowPlayerInputIcon_Implementation( EPlayerInputType ePlayerInputType, bool bShow );
 #pragma endregion
 
 #pragma region [ItemSubsystemHelper]

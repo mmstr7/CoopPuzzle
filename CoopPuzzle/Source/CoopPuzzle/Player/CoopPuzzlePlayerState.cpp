@@ -23,6 +23,7 @@ void ACoopPuzzlePlayerState::BindEventDelegates_DE( int64 iPlayerUID )
 		pWidgetDelegateSubsystem->OnShowLocalNotification_ToClient.FindOrAdd( iPlayerUID ).AddUObject( this, &ACoopPuzzlePlayerState::CLIENT_OnShowLocalNotification );
 		pWidgetDelegateSubsystem->OnPlayerInventoryUpdated_ToClient.FindOrAdd( iPlayerUID ).AddUObject( this, &ACoopPuzzlePlayerState::CLIENT_OnPlayerInventoryUpdated );
 		pWidgetDelegateSubsystem->OnShowItemNotifications_ToClient.FindOrAdd( iPlayerUID ).AddUObject( this, &ACoopPuzzlePlayerState::CLIENT_OnShowItemNotifications );
+		pWidgetDelegateSubsystem->OnShowPlayerInputIcon_ToClient.FindOrAdd( iPlayerUID ).AddUObject( this, &ACoopPuzzlePlayerState::CLIENT_OnShowPlayerInputIcon );
 	}
 
 	// ItemSubsystem 헬퍼 함수 바인딩
@@ -57,6 +58,7 @@ void ACoopPuzzlePlayerState::UnbindEventDelegates_DE( int64 iPlayerUID )
 		pWidgetDelegateSubsystem->OnShowLocalNotification_ToClient.Remove( iPlayerUID );
 		pWidgetDelegateSubsystem->OnPlayerInventoryUpdated_ToClient.Remove( iPlayerUID );
 		pWidgetDelegateSubsystem->OnShowItemNotifications_ToClient.Remove( iPlayerUID );
+		pWidgetDelegateSubsystem->OnShowPlayerInputIcon_ToClient.Remove( iPlayerUID );
 	}
 
 	// ItemSubsystem 헬퍼 함수 언바인딩
@@ -137,6 +139,15 @@ void ACoopPuzzlePlayerState::CLIENT_OnShowItemNotifications_Implementation( cons
 		return;
 
 	pWidgetDelegateSubsystem->OnShowItemNotifications_ToClient.FindOrAdd( 0 ).Broadcast( arrNotificationInfos );
+}
+
+void ACoopPuzzlePlayerState::CLIENT_OnShowPlayerInputIcon_Implementation( EPlayerInputType ePlayerInputType, bool bShow )
+{
+	UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
+	if( IsValid( pWidgetDelegateSubsystem ) == false )
+		return;
+
+	pWidgetDelegateSubsystem->OnShowPlayerInputIcon_ToClient.FindOrAdd( 0 ).Broadcast( ePlayerInputType, bShow );
 }
 #pragma endregion
 

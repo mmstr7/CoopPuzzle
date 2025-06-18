@@ -117,6 +117,17 @@ void UEventTriggerManagerSubsystem::LinkPlayerToEventTrigger( int64 iPlayerUID, 
         const FEventTriggerDataRow* pEventTriggerData = pEventTriggerHandle->EventTrigger.Get()->GetTriggerData();
         switch( pEventTriggerData->ManualTriggerMode )
         {
+        case EManualTriggerMode::InputInteractKey:
+        {
+            if( pEventTriggerHandle->EventTrigger.Get()->GetTriggerState() != EEventTriggerState::Enabled )
+                break;
+
+            UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
+            if( IsValid( pWidgetDelegateSubsystem ) == false )
+                break;
+
+            pWidgetDelegateSubsystem->OnShowPlayerInputIcon_ToClient.FindOrAdd( iPlayerUID ).Broadcast( EPlayerInputType::Interact, true );
+        } break;
         case EManualTriggerMode::InTriggerVolume_Once:
         case EManualTriggerMode::InTriggerVolume_Stay:
         case EManualTriggerMode::InTriggerVolume_Toggle:
@@ -141,19 +152,31 @@ void UEventTriggerManagerSubsystem::UnlinkPlayerToEventTrigger( int64 iPlayerUID
 	mapLinkedPlayerToEventTrigger.Remove( iPlayerUID );
 	mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerUID ).Remove( iPlayerUID );
 
-	//트리거에 연결된 유저가 아무도 없을 때 초기화 해야 하는 모드일 경우
-	if( mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerUID ).Num() <= 0 )
-	{
-		const FEventTriggerHandle* pEventTriggerHandle = mapCachedTriggerHandle.Find( EventTriggerUID );
-		if( pEventTriggerHandle == nullptr || pEventTriggerHandle->EventTrigger.IsValid() == false )
-			return;
+    // 해제와 함께 이벤트 실행해야 하는 모드일 경우
+    const FEventTriggerHandle* pEventTriggerHandle = mapCachedTriggerHandle.Find( EventTriggerUID );
+    if( pEventTriggerHandle != nullptr && pEventTriggerHandle->EventTrigger.IsValid() == true )
+    {
+        const FEventTriggerDataRow* pEventTriggerData = pEventTriggerHandle->EventTrigger.Get()->GetTriggerData();
+        switch( pEventTriggerData->ManualTriggerMode )
+        {
+        case EManualTriggerMode::InputInteractKey:
+        {
+            UWidgetDelegateSubsystem* pWidgetDelegateSubsystem = IsValid( GetGameInstance() ) == true ? GetGameInstance()->GetSubsystem<UWidgetDelegateSubsystem>() : nullptr;
+            if( IsValid( pWidgetDelegateSubsystem ) == false )
+                break;
 
-		const FEventTriggerDataRow* pEventTriggerData = pEventTriggerHandle->EventTrigger.Get()->GetTriggerData();
-		if( pEventTriggerData->ManualTriggerMode == EManualTriggerMode::InTriggerVolume_Stay )
-		{
-			pEventTriggerHandle->OnCompletedDelegate.ExecuteIfBound( EEventTriggerResult::Failed );
-		}
-	}
+            pWidgetDelegateSubsystem->OnShowPlayerInputIcon_ToClient.FindOrAdd( iPlayerUID ).Broadcast( EPlayerInputType::Interact, false );
+        } break;
+        case EManualTriggerMode::InTriggerVolume_Stay:
+        {
+            if( mapLinkedEventTriggerToPlayer.FindOrAdd( EventTriggerUID ).Num() > 0 )
+                break;
+            
+            //트리거에 연결된 유저가 아무도 없을 때 초기화
+            pEventTriggerHandle->OnCompletedDelegate.ExecuteIfBound( EEventTriggerResult::Failed );
+		} break;
+        }
+    }
 }
 
 bool UEventTriggerManagerSubsystem::ShouldCreateSubsystem( UObject* Outer ) const
@@ -327,10 +350,23 @@ EEventTriggerResult UEventTriggerManagerSubsystem::TriggerEvent( int64 iPlayerUI
     if( IsValid( pWidgetDelegateSubsystem ) == true )
     {
         if( const FText* pGlobalNotification = pEventTriggerData->GlobalNotifications.Find( eResult ) )
+        {
             pWidgetDelegateSubsystem->OnShowGlobalNotification_ToClient.Broadcast( *pGlobalNotification );
+        }
 
         if( const FText* pLocalNotification = pEventTriggerData->LocalNotifications.Find( eResult ) )
+        {
             pWidgetDelegateSubsystem->OnShowLocalNotification_ToClient.FindOrAdd( iPlayerUID ).Broadcast( *pLocalNotification );
+        }
+
+        // 트리거 성공 시 연결된 유저들에게 키 알림 off 요청
+        if( eResult == EEventTriggerResult::Success && pEventTriggerData->ManualTriggerMode == EManualTriggerMode::InputInteractKey )
+        {
+            for( int64 iLinkedPlayerUID : mapLinkedEventTriggerToPlayer.FindRef( EventTriggerUID ) )
+            {
+                pWidgetDelegateSubsystem->OnShowPlayerInputIcon_ToClient.FindOrAdd( iLinkedPlayerUID ).Broadcast( EPlayerInputType::Interact, false );
+            }
+        }
     }
 
     pEventTriggerHandle->OnCompletedDelegate.ExecuteIfBound( eResult );

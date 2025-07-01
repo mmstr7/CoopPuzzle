@@ -28,5 +28,6 @@ protected:
 	virtual bool ShouldCreateSubsystem( UObject* Outer ) const override;
 
 private:
+	UPROPERTY()
 	TMap<int64, TWeakObjectPtr<ACoopPuzzleCharacter>> mapCachedPlayer;
 };

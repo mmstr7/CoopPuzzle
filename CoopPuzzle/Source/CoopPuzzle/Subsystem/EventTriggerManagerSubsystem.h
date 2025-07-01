@@ -14,14 +14,19 @@ class AEventTriggerObjectBase;
 DECLARE_DELEGATE_OneParam( FOnEventTriggerCompleted, EEventTriggerResult );
 DECLARE_LOG_CATEGORY_EXTERN( LogEventTriggerManagerSubsystem, Log, All );
 
+USTRUCT()
 struct FEventTriggerHandle
 {
+	GENERATED_BODY()
+
 public:
 	FEventTriggerHandle() {}
 	FEventTriggerHandle( TWeakObjectPtr<AEventTriggerObjectBase> pTrigger, const FOnEventTriggerCompleted& CompletedDelegate )
 		: EventTrigger( pTrigger ), OnCompletedDelegate( CompletedDelegate ) {}
 
+	UPROPERTY()
 	TWeakObjectPtr<AEventTriggerObjectBase> EventTrigger;
+
 	FOnEventTriggerCompleted OnCompletedDelegate;
 };
 
@@ -54,7 +59,9 @@ private:
 	TMap<int64/*PlayerUID*/, int64/*EventTriggerUID*/> mapLinkedPlayerToEventTrigger;
 	TMap<int64/*EventTriggerUID*/, TSet<int64/*PlayerUID*/> > mapLinkedEventTriggerToPlayer;
 
+	UPROPERTY()
 	TMap<int64/*EventTriggerUID*/, FEventTriggerHandle> mapCachedTriggerHandle;
+
 	TMap<int64/*EventTriggerUID*/, FName/*EventTriggerID*/> mapEventTriggerIDs;
 	TMap<FName/*EventTriggerID*/, TSet<int64>/*EventTriggerUID*/> mapEventTriggerUIDs;
 

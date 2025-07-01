@@ -25,11 +25,16 @@ public:
 	FDateTime TimeoutTime = FDateTime::MinValue();
 };
 
+USTRUCT()
 struct FLevelSequenceClientState
 {
+	GENERATED_BODY()
+
 public:
 	bool bIsPlaying = false;
 	int64 m_iPlayingLevelSequenceUID = INVALID_LEVELSEQUENCE_UID;
+
+	UPROPERTY()
 	TWeakObjectPtr<ULevelSequencePlayer> pLevelSequencePlayer = nullptr;
 };
 
